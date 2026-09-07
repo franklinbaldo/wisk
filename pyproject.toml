@@ -13,9 +13,7 @@ authors = [
     { name = "Franklin Silveira Baldo", email = "franklinbaldo@gmail.com" },
 ]
 dependencies = [
-    # Temporary until okf-parser 0.45.8 is published. This commit is merged on upstream main
-    # and provides contract-first export for declared types without concrete instances.
-    "okf-parser @ git+https://github.com/franklinbaldo/okf-parser.git@14b95cf223cd298c8b52958cd1e71fec27d74a53",
+    "okf-parser>=0.45.8",
     "ibis-framework[duckdb]>=9.0",
     "duckdb>=1.0",
     "networkx>=3.2",
@@ -43,9 +41,6 @@ dev = [
     "bandit>=1.8",
     "vulture>=2.14",
 ]
-
-[tool.hatch.metadata]
-allow-direct-references = true
 
 [tool.hatch.version]
 path = "src/wikiskill/__init__.py"
