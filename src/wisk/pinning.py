@@ -9,16 +9,16 @@ from typing import Any
 
 from okf_parser import load_bundle
 
-from wikiskill.cadence import CadenceWikiSkill
+from wisk.cadence import CadenceWisk
 
 _LIFECYCLE_CHECK_KINDS = frozenset({"handoff", "goal-state"})
 
 
-class PinnedWikiSkill(CadenceWikiSkill):
+class PinnedWisk(CadenceWisk):
     """Cadence runtime whose new LoopRuns retain their governing RunSpec contract."""
 
     @classmethod
-    def open(cls, path: str | Path = "knowledge") -> PinnedWikiSkill:
+    def open(cls, path: str | Path = "knowledge") -> PinnedWisk:
         """Open a bundle while preserving the pinned runtime type."""
         root = Path(path).resolve()
         return cls(bundle=load_bundle(root), root_path=root)

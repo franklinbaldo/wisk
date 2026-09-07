@@ -1,7 +1,7 @@
 ---
 type: ConceptSpecification
 concept_type: SessionType
-description: "Defines the purpose and inherited operating contract for one class of WikiSkill session."
+description: "Defines the purpose and inherited operating contract for one class of Wisk session."
 ---
 
 # Concept: SessionType

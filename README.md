@@ -2,7 +2,7 @@
 
 > **Contract-guided agent execution and persistent learning on OKF.**
 
-`wisk` is an experimental agent runtime inspired by Google Research's **"WikiSkill: Compiling Agent Experience into Persistent Knowledge for Skill Evolution" (2026)**.
+`wisk` is an experimental agent runtime inspired by Google Research's **"Wisk: Compiling Agent Experience into Persistent Knowledge for Skill Evolution" (2026)**.
 
 It uses [Open Knowledge Format (OKF)](https://github.com/franklinbaldo/okf-parser) to represent live execution state and persistent learning as an auditable typed knowledge graph.
 
@@ -15,7 +15,7 @@ uvx wisk init .
 wisk session start-next "Do the best useful work available in this repository"
 ```
 
-`wisk init` creates a managed `.wikiskill/` bundle containing compatible normative contracts, canonical learning roles, and the standard consumer profile. The on-disk directory name remains `.wikiskill/` during the rename transition so existing consumers are not broken.
+`wisk init` creates a managed `.wisk/` bundle containing compatible normative contracts, canonical learning roles, and the standard consumer profile.
 
 Managed runtime files can be refreshed with:
 
@@ -127,7 +127,6 @@ wisk handoff list|create|continue ...
 wisk serve
 ```
 
-The old `wikiskill` executable remains temporarily available as a compatibility alias.
 
 ## Python API
 
@@ -137,7 +136,6 @@ New code should import `wisk`:
 from wisk import Wisk
 ```
 
-`WikiSkill` and the legacy `wikiskill` module remain available temporarily for compatibility.
 
 ## Architecture boundary
 
@@ -176,11 +174,6 @@ uv sync
 uv run wisk info
 ```
 
-## Rename compatibility
-
-The project was originally named `wikiskill`, after the paper that inspired it. The public project, repository, PyPI distribution, CLI, and preferred Python import are now **Wisk** / `wisk`.
-
-For a transition period, the legacy Python module, CLI alias, class name, and `.wikiskill/` managed directory remain supported so existing repositories can migrate deliberately instead of breaking during the product rename.
 
 ## License
 

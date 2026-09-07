@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from wikiskill import WikiSkill
+from wisk import Wisk
 
 ROOT = Path(__file__).parent.parent
 
@@ -27,10 +27,10 @@ def _write(path: Path, frontmatter: dict[str, object]) -> None:
 
 
 def test_session_type_inheritance_appends_nudges() -> None:
-    session = WikiSkill.open(ROOT / "knowledge").effective_session_type("session-types/development")
+    session = Wisk.open(ROOT / "knowledge").effective_session_type("session-types/development")
     assert session["inheritance"] == ["session-types/base", "session-types/development"]
     assert len(session["nudges"]) >= 4
-    assert session["run_spec"] == "run-specs/wikiskill-development"
+    assert session["run_spec"] == "run-specs/wisk-development"
 
 
 def test_session_type_cycle_is_rejected(tmp_path: Path) -> None:
@@ -43,7 +43,7 @@ def test_session_type_cycle_is_rejected(tmp_path: Path) -> None:
             "id": "session-types/cycle-a",
             "title": "A",
             "purpose": "cycle",
-            "run_spec": "run-specs/wikiskill-development",
+            "run_spec": "run-specs/wisk-development",
             "extends": "session-types/cycle-b",
         },
     )
@@ -54,18 +54,18 @@ def test_session_type_cycle_is_rejected(tmp_path: Path) -> None:
             "id": "session-types/cycle-b",
             "title": "B",
             "purpose": "cycle",
-            "run_spec": "run-specs/wikiskill-development",
+            "run_spec": "run-specs/wisk-development",
             "extends": "session-types/cycle-a",
         },
     )
     with pytest.raises(ValueError, match="inheritance cycle"):
-        WikiSkill.open(knowledge).effective_session_type("session-types/cycle-a")
+        Wisk.open(knowledge).effective_session_type("session-types/cycle-a")
 
 
 def test_missing_default_falls_back_to_an_available_session(tmp_path: Path) -> None:
     knowledge = _bundle(tmp_path)
     (knowledge / "skills" / "session-types" / "development.md").unlink()
-    result = WikiSkill.open(knowledge).start_run("fallback session")
+    result = Wisk.open(knowledge).start_run("fallback session")
     assert result["session_type"] == "session-types/base"
 
 
@@ -73,4 +73,4 @@ def test_bundle_without_session_types_cannot_start(tmp_path: Path) -> None:
     knowledge = _bundle(tmp_path)
     shutil.rmtree(knowledge / "skills" / "session-types")
     with pytest.raises(ValueError, match="No SessionType"):
-        WikiSkill.open(knowledge).start_run("no session type")
+        Wisk.open(knowledge).start_run("no session type")

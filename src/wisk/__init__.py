@@ -1,11 +1,12 @@
-"""Wisk public package.
+"""Wisk compatibility runtime built on OKF.
 
-Wisk is the public product/package name. The legacy ``wikiskill`` package remains
-available temporarily for compatibility with existing consumers.
+The public product/package name is ``wisk``. ``wisk`` remains importable
+for compatibility with existing consumers during the rename transition.
 """
 
-from wikiskill import WikiSkill, __version__
+from wisk.live_run import LiveRunWisk as Wisk
 
-Wisk = WikiSkill
+Wisk = Wisk
 
-__all__ = ["Wisk", "WikiSkill", "__version__"]
+__version__ = "0.3.0"
+__all__ = ["Wisk", "Wisk", "__version__"]

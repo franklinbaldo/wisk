@@ -23,9 +23,7 @@ dependencies = [
 ]
 
 [project.scripts]
-wisk = "wikiskill.cli:app"
-# Temporary compatibility alias for existing consumers.
-wikiskill = "wikiskill.cli:app"
+wisk = "wisk.cli:app"
 
 [project.urls]
 Homepage = "https://github.com/franklinbaldo/wisk"
@@ -43,22 +41,22 @@ dev = [
 ]
 
 [tool.hatch.version]
-path = "src/wikiskill/__init__.py"
+path = "src/wisk/__init__.py"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/wisk", "src/wikiskill"]
+packages = ["src/wisk"]
 
 # Consumer bootstrap must work from an installed wheel, not only from this Git checkout.
 # These force-includes single-source the normative contracts and canonical learning roles
 # that are also used by Wisk's own dogfood bundle.
 [tool.hatch.build.targets.wheel.force-include]
-"specs" = "wikiskill/_assets/specs"
-"knowledge/skills/session-types/experience.md" = "wikiskill/_assets/canonical/session-types/experience.md"
-"knowledge/skills/session-types/wiki.md" = "wikiskill/_assets/canonical/session-types/wiki.md"
-"knowledge/skills/session-types/skill.md" = "wikiskill/_assets/canonical/session-types/skill.md"
-"knowledge/skills/run-specs/experience.md" = "wikiskill/_assets/canonical/run-specs/experience.md"
-"knowledge/skills/run-specs/wiki.md" = "wikiskill/_assets/canonical/run-specs/wiki.md"
-"knowledge/skills/run-specs/skill.md" = "wikiskill/_assets/canonical/run-specs/skill.md"
+"specs" = "wisk/_assets/specs"
+"knowledge/skills/session-types/experience.md" = "wisk/_assets/canonical/session-types/experience.md"
+"knowledge/skills/session-types/wiki.md" = "wisk/_assets/canonical/session-types/wiki.md"
+"knowledge/skills/session-types/skill.md" = "wisk/_assets/canonical/session-types/skill.md"
+"knowledge/skills/run-specs/experience.md" = "wisk/_assets/canonical/run-specs/experience.md"
+"knowledge/skills/run-specs/wiki.md" = "wisk/_assets/canonical/run-specs/wiki.md"
+"knowledge/skills/run-specs/skill.md" = "wisk/_assets/canonical/run-specs/skill.md"
 
 [tool.ruff]
 target-version = "py312"
@@ -72,16 +70,16 @@ exclude_dirs = ["tests", ".venv"]
 skips = ["B101"]
 
 [tool.vulture]
-paths = ["src/wikiskill", "src/wisk"]
+paths = ["src/wisk"]
 min_confidence = 80
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "--cov=wikiskill --cov-report=term-missing --cov-fail-under=80"
+addopts = "--cov=wisk --cov-report=term-missing --cov-fail-under=80"
 
 [tool.coverage.run]
 branch = true
-source = ["src/wikiskill"]
+source = ["src/wisk"]
 
 [tool.coverage.report]
 show_missing = true

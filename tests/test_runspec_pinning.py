@@ -4,7 +4,7 @@ import json
 import shutil
 from pathlib import Path
 
-from wikiskill import WikiSkill
+from wisk import Wisk
 
 ROOT = Path(__file__).parent.parent
 
@@ -17,19 +17,19 @@ def _copy_bundle(tmp_path: Path) -> Path:
 
 def test_new_run_pins_complete_runspec_snapshot(tmp_path: Path) -> None:
     knowledge = _copy_bundle(tmp_path)
-    ws = WikiSkill.open(knowledge)
+    ws = Wisk.open(knowledge)
     started = ws.start_run(
         "pin the governing contract",
-        "run-specs/wikiskill-development",
+        "run-specs/wisk-development",
     )
 
-    run = WikiSkill.open(knowledge)._find_record("LoopRun", started["run_id"])
+    run = Wisk.open(knowledge)._find_record("LoopRun", started["run_id"])
     frontmatter = run["frontmatter"]
     snapshot = json.loads(str(frontmatter["run_spec_snapshot"]))
 
     assert frontmatter["run_spec_version"] == "1.1.0"
     assert str(frontmatter["run_spec_digest"]).startswith("sha256:")
-    assert snapshot["id"] == "run-specs/wikiskill-development"
+    assert snapshot["id"] == "run-specs/wisk-development"
     assert snapshot["required_goal_kinds"] == ["project-advance"]
     assert "path" not in snapshot
     assert "inheritance" not in snapshot
@@ -62,7 +62,7 @@ Consumer specialization of the canonical Skill RunSpec.
         encoding="utf-8",
     )
 
-    ws = WikiSkill.open(knowledge)
+    ws = Wisk.open(knowledge)
     effective = ws.effective_run_spec("run-specs/judicial-skill")
     assert effective["inheritance"] == ["run-specs/skill", "run-specs/judicial-skill"]
     assert effective["required_goal_kinds"] == ["evolve-skill"]
@@ -79,7 +79,7 @@ Consumer specialization of the canonical Skill RunSpec.
     ]
 
     started = ws.start_run("evolve Judicial procedure", "run-specs/judicial-skill")
-    run = WikiSkill.open(knowledge)._find_record("LoopRun", started["run_id"])
+    run = Wisk.open(knowledge)._find_record("LoopRun", started["run_id"])
     snapshot = json.loads(str(run["frontmatter"]["run_spec_snapshot"]))
     assert snapshot["id"] == "run-specs/judicial-skill"
     assert snapshot["required_check_kinds"] == ["lineage", "proportionality"]
@@ -92,12 +92,12 @@ Consumer specialization of the canonical Skill RunSpec.
 
 def test_check_run_uses_snapshot_after_runspec_changes(tmp_path: Path) -> None:
     knowledge = _copy_bundle(tmp_path)
-    started = WikiSkill.open(knowledge).start_run(
+    started = Wisk.open(knowledge).start_run(
         "historical contract stability",
-        "run-specs/wikiskill-development",
+        "run-specs/wisk-development",
     )
 
-    spec_path = knowledge / "skills" / "run-specs" / "wikiskill-development.md"
+    spec_path = knowledge / "skills" / "run-specs" / "wisk-development.md"
     current = spec_path.read_text(encoding="utf-8")
     changed = current.replace(
         "required_goal_kinds:\n  - project-advance",
@@ -105,7 +105,7 @@ def test_check_run_uses_snapshot_after_runspec_changes(tmp_path: Path) -> None:
     )
     spec_path.write_text(changed, encoding="utf-8")
 
-    result = WikiSkill.open(knowledge).check_run(started["run_id"])
+    result = Wisk.open(knowledge).check_run(started["run_id"])
     requirements = {item["requirement"] for item in result["unsatisfied"]}
 
     assert result["run_spec_pinned"] is True
@@ -116,19 +116,19 @@ def test_check_run_uses_snapshot_after_runspec_changes(tmp_path: Path) -> None:
 
 def test_tampered_runspec_snapshot_fails_contract_check(tmp_path: Path) -> None:
     knowledge = _copy_bundle(tmp_path)
-    started = WikiSkill.open(knowledge).start_run(
+    started = Wisk.open(knowledge).start_run(
         "detect snapshot tampering",
-        "run-specs/wikiskill-development",
+        "run-specs/wisk-development",
     )
 
-    ws = WikiSkill.open(knowledge)
+    ws = Wisk.open(knowledge)
     run = ws._find_record("LoopRun", started["run_id"])
     path = knowledge / run["path"]
     digest = str(run["frontmatter"]["run_spec_digest"])
     replacement = "sha256:" + ("0" * 64)
     path.write_text(path.read_text(encoding="utf-8").replace(digest, replacement), encoding="utf-8")
 
-    result = WikiSkill.open(knowledge).check_run(started["run_id"])
+    result = Wisk.open(knowledge).check_run(started["run_id"])
 
     assert result["conformant"] is False
     assert result["next_action"]["kind"] == "contract"

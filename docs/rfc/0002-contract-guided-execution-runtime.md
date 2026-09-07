@@ -6,7 +6,7 @@ Issues: #27, #28, #29, #30
 
 ## Summary
 
-WikiSkill evolves from a persistent learning runtime into a **contract-guided agent execution runtime with persistent learning**.
+Wisk evolves from a persistent learning runtime into a **contract-guided agent execution runtime with persistent learning**.
 
 The core execution flow becomes:
 
@@ -28,7 +28,7 @@ This makes the run artifact simultaneously a plan, checklist, state machine, evi
 
 ## Motivation
 
-WikiSkill already models what an agent learned after execution through `Experience`, `WikiEntry`, `AgentSkill`, `SkillProposal`, `SkillEvaluation`, and `LoopRun`. The missing layer is the contract that guides the execution itself.
+Wisk already models what an agent learned after execution through `Experience`, `WikiEntry`, `AgentSkill`, `SkillProposal`, `SkillEvaluation`, and `LoopRun`. The missing layer is the contract that guides the execution itself.
 
 A retrospective trace cannot tell an agent, at the beginning of a session, what evidence is still needed or which preconditions remain unsatisfied. Consumers currently need to reinvent this logic in prompts.
 
@@ -54,7 +54,7 @@ A `RunGoal` carries a `success_signal` describing what observable state would co
 
 ### Domain contracts specialize the generic runtime
 
-WikiSkill provides generic execution concepts. A software-development skill, newsroom skill, legal-analysis skill, research skill, or consumer repository can define a specific `RunSpec` that requires domain-specific readings, evidence and completion conditions.
+Wisk provides generic execution concepts. A software-development skill, newsroom skill, legal-analysis skill, research skill, or consumer repository can define a specific `RunSpec` that requires domain-specific readings, evidence and completion conditions.
 
 ### Contracts are evolvable
 
@@ -120,12 +120,12 @@ The generic runtime should not encode these domain rules directly.
 The desired runtime API is conceptually:
 
 ```text
-wikiskill_start(task, run_spec?)
+wisk_start(task, run_spec?)
   -> selects/loads a RunSpec
   -> creates an intentionally incomplete LoopRun scaffold
   -> returns initial context and requirements
 
-wikiskill_check(run)
+wisk_check(run)
   -> validates the live OKF graph
   -> returns unsatisfied requirements and current state
 ```
@@ -134,7 +134,7 @@ CLI and FastMCP should expose equivalent operations. These operations must reuse
 
 ## Dogfooding
 
-WikiSkill should use this protocol to develop itself. The repository will define a development `RunSpec` and store its own live/completed runs in `knowledge/`.
+Wisk should use this protocol to develop itself. The repository will define a development `RunSpec` and store its own live/completed runs in `knowledge/`.
 
 This makes the project exercise the same protocol offered to consumers and gives the learning layer real execution evidence to evolve against.
 
@@ -152,4 +152,4 @@ The migration should proceed incrementally:
 
 ## Success criteria
 
-The pivot succeeds when an agent can enter a repository with a task, start a WikiSkill run, receive an intentionally incomplete typed scaffold, work while repeatedly validating it, and leave behind a graph that both explains the achieved state and makes the next continuation obvious.
+The pivot succeeds when an agent can enter a repository with a task, start a Wisk run, receive an intentionally incomplete typed scaffold, work while repeatedly validating it, and leave behind a graph that both explains the achieved state and makes the next continuation obvious.

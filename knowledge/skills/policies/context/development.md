@@ -17,4 +17,4 @@ instructions:
 
 # Development context policy
 
-Advisory default for general WikiSkill development sessions.
+Advisory default for general Wisk development sessions.

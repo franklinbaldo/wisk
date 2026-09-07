@@ -1,7 +1,7 @@
 ---
 type: OutputPolicy
 id: output-policies/default
-title: Three-stage WikiSkill layout
+title: Three-stage Wisk layout
 experience_path: experiences/records
 run_path: experiences/runs
 handoff_path: experiences/handoffs
@@ -19,4 +19,4 @@ cadence_policy_path: skills/policies/cadence
 
 # Default output policy
 
-All durable WikiSkill artifacts live under one of three principal namespaces: `experiences/`, `wiki/`, or `skills/`.
+All durable Wisk artifacts live under one of three principal namespaces: `experiences/`, `wiki/`, or `skills/`.

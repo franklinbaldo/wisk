@@ -1,7 +1,7 @@
 ---
 type: RunSpec
-id: run-specs/wikiskill-development
-title: WikiSkill development run
+id: run-specs/wisk-development
+title: Wisk development run
 version: "1.1.0"
 status: experimental
 required_reading_kinds:
@@ -33,9 +33,9 @@ allowed_result_states:
 completion_notes: "A development run should leave typed evidence of what changed, how it was verified, and what continuation is now natural. Partial work must leave an active Handoff."
 ---
 
-# WikiSkill development run
+# Wisk development run
 
-This RunSpec dogfoods contract-guided execution inside WikiSkill itself.
+This RunSpec dogfoods contract-guided execution inside Wisk itself.
 
 A session begins by creating a `LoopRun` scaffold before substantive work. The run records repository/context readings, including active handoffs from earlier sessions, one or more observable goals, consequential decisions, evidence, checks, and a coherent outcome.
 
@@ -43,4 +43,4 @@ The run is validated repeatedly with `okf-parser`. Missing required state is tre
 
 When the session declares `work_status: partial`, it emits a `Handoff` with enough state and references for a future `LoopRun` to resume the work. A later run records the handoff reading and archives the handoff when it actually continues that work.
 
-This spec is intentionally evolvable. Evidence from real development runs may justify changing its required reading, goal, evidence, check, or state categories through the normal WikiSkill learning lifecycle.
+This spec is intentionally evolvable. Evidence from real development runs may justify changing its required reading, goal, evidence, check, or state categories through the normal Wisk learning lifecycle.

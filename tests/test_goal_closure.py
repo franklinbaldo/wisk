@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from wikiskill import WikiSkill
+from wisk import Wisk
 
 ROOT = Path(__file__).parent.parent
 
@@ -26,7 +26,7 @@ def _write_concept(path: Path, frontmatter: dict[str, object]) -> None:
     path.write_text("\n".join(lines), encoding="utf-8")
 
 
-def _closure_run(knowledge_path: Path, task: str) -> tuple[WikiSkill, str]:
+def _closure_run(knowledge_path: Path, task: str) -> tuple[Wisk, str]:
     _write_concept(
         knowledge_path / "skills" / "run-specs" / "closure-test.md",
         {
@@ -42,7 +42,7 @@ def _closure_run(knowledge_path: Path, task: str) -> tuple[WikiSkill, str]:
             "allowed_result_states": ["success", "partial"],
         },
     )
-    ws = WikiSkill.open(knowledge_path)
+    ws = Wisk.open(knowledge_path)
     started = ws.start_run(task, "run-specs/closure-test")
     return ws, started["run_id"]
 
@@ -61,7 +61,7 @@ def test_active_goal_blocks_outcome_until_achieved(tmp_path: Path) -> None:
     goal_id = goal["id"]
 
     with pytest.raises(ValueError, match="goal-state"):
-        WikiSkill.open(knowledge_path).record_run_outcome(
+        Wisk.open(knowledge_path).record_run_outcome(
             run=run_id,
             component_id="done",
             result_state="success",
@@ -70,7 +70,7 @@ def test_active_goal_blocks_outcome_until_achieved(tmp_path: Path) -> None:
             next_move="None.",
         )
 
-    updated = WikiSkill.open(knowledge_path).update_run_goal_status(
+    updated = Wisk.open(knowledge_path).update_run_goal_status(
         run=run_id,
         goal=goal_id,
         status="achieved",
@@ -78,7 +78,7 @@ def test_active_goal_blocks_outcome_until_achieved(tmp_path: Path) -> None:
     assert updated["status"] == "achieved"
     assert not any(item["kind"] == "goal-state" for item in updated["check"]["unsatisfied"])
 
-    outcome = WikiSkill.open(knowledge_path).record_run_outcome(
+    outcome = Wisk.open(knowledge_path).record_run_outcome(
         run=run_id,
         component_id="done",
         result_state="success",
@@ -103,17 +103,17 @@ def test_carried_goal_requires_explicit_handoff_link(tmp_path: Path) -> None:
         success_signal="A later run has an explicit continuation point.",
     )
     goal_id = goal["id"]
-    WikiSkill.open(knowledge_path).update_run_goal_status(
+    Wisk.open(knowledge_path).update_run_goal_status(
         run=run_id,
         goal=goal_id,
         status="carried_forward",
     )
 
-    before = WikiSkill.open(knowledge_path).check_run(run_id)
+    before = Wisk.open(knowledge_path).check_run(run_id)
     assert f"handoff:{goal_id}" in {item["requirement"] for item in before["unsatisfied"]}
 
     with pytest.raises(ValueError, match="Handoff"):
-        WikiSkill.open(knowledge_path).record_run_outcome(
+        Wisk.open(knowledge_path).record_run_outcome(
             run=run_id,
             component_id="partial",
             result_state="partial",
@@ -122,7 +122,7 @@ def test_carried_goal_requires_explicit_handoff_link(tmp_path: Path) -> None:
             next_move="Create the handoff.",
         )
 
-    handoff = WikiSkill.open(knowledge_path).create_handoff(
+    handoff = Wisk.open(knowledge_path).create_handoff(
         handoff_id="carry-goal",
         title="Continue the carried goal",
         created_by_run=run_id,
@@ -133,7 +133,7 @@ def test_carried_goal_requires_explicit_handoff_link(tmp_path: Path) -> None:
     )
     assert handoff["status"] == "active"
 
-    closed = WikiSkill.open(knowledge_path).record_run_outcome(
+    closed = Wisk.open(knowledge_path).record_run_outcome(
         run=run_id,
         component_id="partial",
         result_state="partial",
@@ -145,12 +145,12 @@ def test_carried_goal_requires_explicit_handoff_link(tmp_path: Path) -> None:
     assert closed["check"]["conformant"] is True
 
     _, later_run = _closure_run(knowledge_path, "resume carried goal")
-    WikiSkill.open(knowledge_path).continue_handoff(
+    Wisk.open(knowledge_path).continue_handoff(
         handoff=handoff["id"],
         continued_by_run=later_run,
         resolution="The later run resumed the carried work.",
     )
-    historical = WikiSkill.open(knowledge_path).check_run(run_id)
+    historical = Wisk.open(knowledge_path).check_run(run_id)
     assert historical["conformant"] is True
     assert historical["handoffs_created"] == 1
     assert historical["active_handoffs_created"] == 0
@@ -170,7 +170,7 @@ def test_handoff_rejects_goal_from_another_run(tmp_path: Path) -> None:
     _, second_run = _closure_run(knowledge_path, "second run")
 
     with pytest.raises(ValueError, match="another run"):
-        WikiSkill.open(knowledge_path).create_handoff(
+        Wisk.open(knowledge_path).create_handoff(
             handoff_id="wrong-run",
             title="Wrong run",
             created_by_run=second_run,

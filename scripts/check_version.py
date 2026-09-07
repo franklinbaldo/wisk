@@ -8,7 +8,7 @@
 """Check version synchronization across the repository and changelog presence.
 
 Rules enforced:
-1. Canonical version is single-sourced in src/wikiskill/__init__.py.
+1. Canonical version is single-sourced in src/wisk/__init__.py.
 2. The current version has at least one matching change card in changelog/changes/.
 3. Every change card in changelog/changes/ has valid frontmatter (type: Changelog, version, date).
 """
@@ -45,7 +45,7 @@ def parse_semver(ver: str) -> tuple[int, int, int]:
 
 
 def get_base_version(base_ref: str = "origin/main") -> str | None:
-    content = _git("show", f"{base_ref}:src/wikiskill/__init__.py")
+    content = _git("show", f"{base_ref}:src/wisk/__init__.py")
     if not content:
         return None
     m = re.search(r'__version__\s*=\s*["\']([^"\']+)["\']', content)
@@ -67,10 +67,10 @@ def check_breaking_test_changes(base_ref: str = "origin/main") -> bool:
 
 
 def get_canonical_version() -> str:
-    content = (ROOT / "src/wikiskill/__init__.py").read_text(encoding="utf-8")
+    content = (ROOT / "src/wisk/__init__.py").read_text(encoding="utf-8")
     m = re.search(r'__version__\s*=\s*["\']([^"\']+)["\']', content)
     if not m:
-        msg = "Cannot find __version__ in src/wikiskill/__init__.py"
+        msg = "Cannot find __version__ in src/wisk/__init__.py"
         raise ValueError(msg)
     return m.group(1)
 

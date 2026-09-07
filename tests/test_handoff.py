@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from wikiskill import WikiSkill
+from wisk import Wisk
 
 ROOT = Path(__file__).parent.parent
 
@@ -28,8 +28,8 @@ def _write_concept(path: Path, frontmatter: dict[str, object]) -> None:
 
 def test_partial_run_requires_handoff_and_future_run_archives_it(tmp_path: Path) -> None:
     knowledge_path = _temp_bundle(tmp_path)
-    ws = WikiSkill.open(knowledge_path)
-    source = ws.start_run("wikiskill handoff development", "run-specs/wikiskill-development")
+    ws = Wisk.open(knowledge_path)
+    source = ws.start_run("wisk handoff development", "run-specs/wisk-development")
     source_run = source["run_id"]
 
     _write_concept(
@@ -45,36 +45,36 @@ def test_partial_run_requires_handoff_and_future_run_archives_it(tmp_path: Path)
         },
     )
 
-    before = WikiSkill.open(knowledge_path).check_run(source_run)
+    before = Wisk.open(knowledge_path).check_run(source_run)
     assert "handoff" in {item["requirement"] for item in before["unsatisfied"]}
 
-    ws = WikiSkill.open(knowledge_path)
+    ws = Wisk.open(knowledge_path)
     created = ws.create_handoff(
         handoff_id="handoff-runtime",
         title="Finish Handoff runtime",
         created_by_run=source_run,
         state="The type and RED contract exist; lifecycle implementation remains.",
         next_action="Implement create/list/continue and make checks GREEN.",
-        references=["#38", "src/wikiskill/handoff.py"],
+        references=["#38", "src/wisk/handoff.py"],
     )
     assert created["id"] == "handoffs/handoff-runtime"
     assert created["status"] == "active"
 
-    after = WikiSkill.open(knowledge_path).check_run(source_run)
+    after = Wisk.open(knowledge_path).check_run(source_run)
     assert "handoff" not in {item["requirement"] for item in after["unsatisfied"]}
     assert after["active_handoffs_created"] == 1
 
-    context = WikiSkill.open(knowledge_path).context("finish handoff runtime")
+    context = Wisk.open(knowledge_path).context("finish handoff runtime")
     assert context["active_handoffs"][0]["id"] == "handoffs/handoff-runtime"
     assert context["active_handoffs"][0]["next_action"].startswith("Implement create")
 
-    continuing = WikiSkill.open(knowledge_path).start_run(
-        "finish handoff runtime", "run-specs/wikiskill-development"
+    continuing = Wisk.open(knowledge_path).start_run(
+        "finish handoff runtime", "run-specs/wisk-development"
     )
     continuing_run = continuing["run_id"]
     assert continuing["active_handoffs"][0]["id"] == "handoffs/handoff-runtime"
 
-    archived = WikiSkill.open(knowledge_path).continue_handoff(
+    archived = Wisk.open(knowledge_path).continue_handoff(
         handoff="handoffs/handoff-runtime",
         continued_by_run=continuing_run,
         resolution="The later run adopted the handoff and continued its implementation.",
@@ -84,7 +84,7 @@ def test_partial_run_requires_handoff_and_future_run_archives_it(tmp_path: Path)
         "status": "archived",
         "continued_by_run": continuing_run,
     }
-    assert WikiSkill.open(knowledge_path).active_handoffs() == []
+    assert Wisk.open(knowledge_path).active_handoffs() == []
 
     handoff_doc = (knowledge_path / "experiences" / "handoffs" / "handoff-runtime.md").read_text(
         encoding="utf-8"
@@ -96,21 +96,19 @@ def test_partial_run_requires_handoff_and_future_run_archives_it(tmp_path: Path)
 
 
 def test_handoff_mcp_surface_executes_full_lifecycle(tmp_path: Path) -> None:
-    from wikiskill.mcp import (
-        wikiskill_handoff_continue,
-        wikiskill_handoff_create,
-        wikiskill_handoffs,
+    from wisk.mcp import (
+        wisk_handoff_continue,
+        wisk_handoff_create,
+        wisk_handoffs,
     )
 
     knowledge_path = _temp_bundle(tmp_path)
-    source = WikiSkill.open(knowledge_path).start_run(
-        "source handoff", "run-specs/wikiskill-development"
-    )
-    continuing = WikiSkill.open(knowledge_path).start_run(
-        "continue handoff", "run-specs/wikiskill-development"
+    source = Wisk.open(knowledge_path).start_run("source handoff", "run-specs/wisk-development")
+    continuing = Wisk.open(knowledge_path).start_run(
+        "continue handoff", "run-specs/wisk-development"
     )
 
-    created = wikiskill_handoff_create(
+    created = wisk_handoff_create(
         handoff_id="mcp-handoff",
         title="Continue through MCP",
         created_by_run=source["run_id"],
@@ -121,23 +119,23 @@ def test_handoff_mcp_surface_executes_full_lifecycle(tmp_path: Path) -> None:
     )
     assert created["status"] == "active"
 
-    active = wikiskill_handoffs("MCP handoff", path=str(knowledge_path))
+    active = wisk_handoffs("MCP handoff", path=str(knowledge_path))
     assert active[0]["id"] == "handoffs/mcp-handoff"
 
-    archived = wikiskill_handoff_continue(
+    archived = wisk_handoff_continue(
         handoff="handoffs/mcp-handoff",
         continued_by_run=continuing["run_id"],
         resolution="The continuing run resumed the MCP handoff.",
         path=str(knowledge_path),
     )
     assert archived["status"] == "archived"
-    assert wikiskill_handoffs(path=str(knowledge_path)) == []
+    assert wisk_handoffs(path=str(knowledge_path)) == []
 
 
 def test_handoff_rejects_invalid_continuation(tmp_path: Path) -> None:
     knowledge_path = _temp_bundle(tmp_path)
-    ws = WikiSkill.open(knowledge_path)
-    source = ws.start_run("source handoff", "run-specs/wikiskill-development")
+    ws = Wisk.open(knowledge_path)
+    source = ws.start_run("source handoff", "run-specs/wisk-development")
     source_run = source["run_id"]
     ws.create_handoff(
         handoff_id="same-run",
@@ -148,7 +146,7 @@ def test_handoff_rejects_invalid_continuation(tmp_path: Path) -> None:
     )
 
     with pytest.raises(ValueError, match="later LoopRun"):
-        WikiSkill.open(knowledge_path).continue_handoff(
+        Wisk.open(knowledge_path).continue_handoff(
             handoff="handoffs/same-run",
             continued_by_run=source_run,
             resolution="This must be rejected.",
@@ -157,8 +155,8 @@ def test_handoff_rejects_invalid_continuation(tmp_path: Path) -> None:
 
 def test_complete_run_does_not_require_handoff(tmp_path: Path) -> None:
     knowledge_path = _temp_bundle(tmp_path)
-    ws = WikiSkill.open(knowledge_path)
-    started = ws.start_run("wikiskill development", "run-specs/wikiskill-development")
+    ws = Wisk.open(knowledge_path)
+    started = ws.start_run("wisk development", "run-specs/wisk-development")
     run_id = started["run_id"]
 
     _write_concept(
@@ -174,5 +172,5 @@ def test_complete_run_does_not_require_handoff(tmp_path: Path) -> None:
         },
     )
 
-    result = WikiSkill.open(knowledge_path).check_run(run_id)
+    result = Wisk.open(knowledge_path).check_run(run_id)
     assert "handoff" not in {item["requirement"] for item in result["unsatisfied"]}

@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from wikiskill import WikiSkill
+from wisk import Wisk
 
 ROOT = Path(__file__).parent.parent
 
@@ -18,10 +18,10 @@ def _copy_bundle(tmp_path: Path) -> Path:
 
 def test_typed_writes_drive_run_from_scaffold_to_closed(tmp_path: Path) -> None:
     knowledge = _copy_bundle(tmp_path)
-    ws = WikiSkill.open(knowledge)
+    ws = Wisk.open(knowledge)
     started = ws.start_run(
         "exercise typed live-run writes",
-        "run-specs/wikiskill-development",
+        "run-specs/wisk-development",
     )
     run_id = started["run_id"]
 
@@ -65,7 +65,7 @@ def test_typed_writes_drive_run_from_scaffold_to_closed(tmp_path: Path) -> None:
         run=run_id,
         component_id="change",
         kind="change",
-        reference="src/wikiskill/live_run.py",
+        reference="src/wisk/live_run.py",
         summary="typed component writer persists and attaches run state",
         goal=goal["id"],
         decision=decision["id"],
@@ -115,7 +115,7 @@ def test_typed_writes_drive_run_from_scaffold_to_closed(tmp_path: Path) -> None:
     assert outcome["check"]["conformant"] is True
     assert outcome["check"]["next_action"]["kind"] == "complete"
 
-    run = WikiSkill.open(knowledge)._find_record("LoopRun", run_id)
+    run = Wisk.open(knowledge)._find_record("LoopRun", run_id)
     frontmatter = run["frontmatter"]
     assert frontmatter["status"] == "closed"
     assert len(frontmatter["readings"]) == 6
@@ -137,8 +137,8 @@ def test_typed_writes_drive_run_from_scaffold_to_closed(tmp_path: Path) -> None:
 
 def test_component_collision_is_explicit_and_does_not_duplicate_link(tmp_path: Path) -> None:
     knowledge = _copy_bundle(tmp_path)
-    ws = WikiSkill.open(knowledge)
-    run_id = ws.start_run("collision proof", "run-specs/wikiskill-development")["run_id"]
+    ws = Wisk.open(knowledge)
+    run_id = ws.start_run("collision proof", "run-specs/wisk-development")["run_id"]
 
     first = ws.record_run_reading(
         run=run_id,
@@ -158,14 +158,14 @@ def test_component_collision_is_explicit_and_does_not_duplicate_link(tmp_path: P
             finding="duplicate",
         )
 
-    run = WikiSkill.open(knowledge)._find_record("LoopRun", run_id)
+    run = Wisk.open(knowledge)._find_record("LoopRun", run_id)
     assert run["frontmatter"]["readings"] == [first["id"]]
 
 
 def test_outcome_refuses_unmet_run_prerequisites(tmp_path: Path) -> None:
     knowledge = _copy_bundle(tmp_path)
-    ws = WikiSkill.open(knowledge)
-    run_id = ws.start_run("premature outcome", "run-specs/wikiskill-development")["run_id"]
+    ws = Wisk.open(knowledge)
+    run_id = ws.start_run("premature outcome", "run-specs/wisk-development")["run_id"]
 
     with pytest.raises(ValueError, match="unmet prerequisites"):
         ws.record_run_outcome(
@@ -177,6 +177,6 @@ def test_outcome_refuses_unmet_run_prerequisites(tmp_path: Path) -> None:
             next_move="satisfy the contract first",
         )
 
-    run = WikiSkill.open(knowledge)._find_record("LoopRun", run_id)
+    run = Wisk.open(knowledge)._find_record("LoopRun", run_id)
     assert run["frontmatter"]["status"] == "scaffold"
     assert not run["frontmatter"].get("outcome")

@@ -7,7 +7,7 @@ from typing import Any
 
 from okf_parser import load_bundle
 
-from wikiskill.session import SessionWikiSkill
+from wisk.session import SessionWisk
 
 _POLICY_KEYS = ("context_policy", "access_policy", "output_policy")
 _OUTPUT_FIELDS = {
@@ -54,11 +54,11 @@ _DEFAULT_OUTPUTS = {
 }
 
 
-class PolicyWikiSkill(SessionWikiSkill):
+class PolicyWisk(SessionWisk):
     """Session runtime that resolves, explains, and applies policy composition."""
 
     @classmethod
-    def open(cls, path: str | Path = "knowledge") -> PolicyWikiSkill:
+    def open(cls, path: str | Path = "knowledge") -> PolicyWisk:
         root = Path(path).resolve()
         return cls(bundle=load_bundle(root), root_path=root)
 

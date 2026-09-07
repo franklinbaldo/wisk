@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = ">=3.12"
 resolution-markers = [
     "python_full_version >= '3.14' and sys_platform == 'win32'",
@@ -963,7 +963,7 @@ wheels = [
 
 [[package]]
 name = "okf-parser"
-version = "0.45.6"
+version = "0.45.8"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "cyclopts" },
@@ -980,13 +980,13 @@ dependencies = [
     { name = "pyyaml" },
     { name = "ruamel-yaml" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/50/02/032582e5b8904114f8ab7b72b7152c20de59baac3ebd050f7bcf9cdd52d7/okf_parser-0.45.6.tar.gz", hash = "sha256:2b4ed0cf81781c77110868620593d9ced50970410cc1befee4ec65c2bd7cfa2c", size = 611794, upload-time = "2026-09-02T17:03:42.181Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/04/21/f1218af16d02d2a5d0edc7d3e6af95825c0361185f72c097408784194917/okf_parser-0.45.8.tar.gz", hash = "sha256:6944d2b0c61b95ca450ba0b3de5b3e50bbdcb7db46aacab6a67e230a5685b8b9", size = 672930, upload-time = "2026-09-05T19:05:16.228Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/07/20/b527625df9060ab7e05bd672d5685693b4bcf034a9ae802d1ef308116814/okf_parser-0.45.6-py3-none-macosx_10_12_x86_64.whl", hash = "sha256:5d23462d7aaefacf54a89952f34135ac1beea16f55d520bdef376f87246f1b9e", size = 1317154, upload-time = "2026-09-02T17:03:43.347Z" },
-    { url = "https://files.pythonhosted.org/packages/79/a9/7ec30fa70a7f0ce2b2a1294493ac87112b3ee45ce1895c9472a8dfcecdef/okf_parser-0.45.6-py3-none-macosx_11_0_arm64.whl", hash = "sha256:960e2968aaa5b05e5de1d0e9fa7586e18d1e01120238aa3b0813c95b7898167e", size = 1232896, upload-time = "2026-09-02T17:03:39.476Z" },
-    { url = "https://files.pythonhosted.org/packages/f7/db/4819cc1e7ddf8a45d0d8e6a3a67d05b72062e0662d1989b0f7cbeedca44f/okf_parser-0.45.6-py3-none-manylinux_2_28_aarch64.whl", hash = "sha256:bee46a8aac9882950ba2c94dc01a7b8afe9473200a2753fce971a5fd7dcbc2a8", size = 1278403, upload-time = "2026-09-02T17:03:37.846Z" },
-    { url = "https://files.pythonhosted.org/packages/5a/08/138b5ff5090b728e716813a9fc97233f3cc1cc369cb60b6637ed619667b6/okf_parser-0.45.6-py3-none-manylinux_2_28_x86_64.whl", hash = "sha256:00f0f82b02b6dc5ec3cfb1a377240b299726a0e2f62f466184c200dbf6b7e176", size = 1366915, upload-time = "2026-09-02T17:03:44.79Z" },
-    { url = "https://files.pythonhosted.org/packages/7a/7e/8159215122867c7a6d64e802d227caba8788ab074c58a31462f812819b5b/okf_parser-0.45.6-py3-none-win_amd64.whl", hash = "sha256:4546dc6fb341e97ddb497fc26df50250f060d81c13d039dcab072277e1ffb741", size = 1315645, upload-time = "2026-09-02T17:03:40.765Z" },
+    { url = "https://files.pythonhosted.org/packages/dd/53/21ad6ea08b0b50a918adbb2533725ffcf8cc270f3161a8bb278d4fbc7116/okf_parser-0.45.8-py3-none-macosx_10_12_x86_64.whl", hash = "sha256:83f29913191644b47015bd15897a033194a35a2aab402bf954cd28c3bba5bd54", size = 1332731, upload-time = "2026-09-05T19:05:11.427Z" },
+    { url = "https://files.pythonhosted.org/packages/0f/50/df8433d45ed65f8cceecb08bec500093bbe4d85ea9271749128b5cbbc192/okf_parser-0.45.8-py3-none-macosx_11_0_arm64.whl", hash = "sha256:ad182344da7fcc50abe732c2b175f0a25d0ccf918a2a524ad9a3719334d97ec6", size = 1246230, upload-time = "2026-09-05T19:05:13.073Z" },
+    { url = "https://files.pythonhosted.org/packages/48/fb/f2038569dc891d6ff9d6b7ab9873119251c9dbab125d5f4876711c3e3d3f/okf_parser-0.45.8-py3-none-manylinux_2_28_aarch64.whl", hash = "sha256:0870f110c2161b2ae3a47bcafdd91c97e32297cd644c14c3ad95b7bab904087d", size = 1293639, upload-time = "2026-09-05T19:05:14.763Z" },
+    { url = "https://files.pythonhosted.org/packages/4e/08/478afdcbc6f4180144395f4fc6a26e0a2e2af7f6826e1a943e4ce2415587/okf_parser-0.45.8-py3-none-manylinux_2_28_x86_64.whl", hash = "sha256:405e2d4d48babbf56103dd9d1e01ab96c72f813918b9d9a578f96a259ec78972", size = 1381998, upload-time = "2026-09-05T19:05:17.6Z" },
+    { url = "https://files.pythonhosted.org/packages/bd/ad/2a48278a920c14e399b092885575e87078fe2b9b2b2fc930278e8579dbc5/okf_parser-0.45.8-py3-none-win_amd64.whl", hash = "sha256:303094bf8c9db9ca623a1e651797557c44bddeadb81851e7674f2e9909c3d92d", size = 1330891, upload-time = "2026-09-05T19:05:19.107Z" },
 ]
 
 [[package]]
@@ -1649,8 +1649,8 @@ name = "secretstorage"
 version = "3.5.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "cryptography", marker = "sys_platform != 'win32'" },
-    { name = "jeepney", marker = "sys_platform != 'win32'" },
+    { name = "cryptography" },
+    { name = "jeepney" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/1c/03/e834bcd866f2f8a49a85eaff47340affa3bfa391ee9912a952a1faa68c7b/secretstorage-3.5.0.tar.gz", hash = "sha256:f04b8e4689cbce351744d5537bf6b1329c6fc68f91fa666f60a380edddcd11be", size = 19884, upload-time = "2025-11-23T19:02:53.191Z" }
 wheels = [
@@ -2030,7 +2030,7 @@ wheels = [
 ]
 
 [[package]]
-name = "wikiskill"
+name = "wisk"
 source = { editable = "." }
 dependencies = [
     { name = "cyclopts" },
@@ -2060,7 +2060,7 @@ requires-dist = [
     { name = "fastmcp", specifier = ">=3.0" },
     { name = "ibis-framework", extras = ["duckdb"], specifier = ">=9.0" },
     { name = "networkx", specifier = ">=3.2" },
-    { name = "okf-parser", specifier = ">=0.45.6" },
+    { name = "okf-parser", specifier = ">=0.45.8" },
     { name = "pydantic", specifier = ">=2.7" },
 ]
 

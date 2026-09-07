@@ -1,4 +1,4 @@
-"""Non-destructive bootstrap and upgrade for WikiSkill consumer repositories."""
+"""Non-destructive bootstrap and upgrade for Wisk consumer repositories."""
 
 from __future__ import annotations
 
@@ -46,7 +46,7 @@ def _spec_source_root() -> Path:
     source = _source_repository_root() / "specs"
     if source.is_dir():
         return source
-    raise RuntimeError("WikiSkill normative specs are not available in this installation")
+    raise RuntimeError("Wisk normative specs are not available in this installation")
 
 
 def _canonical_source(relative: str) -> Path:
@@ -56,13 +56,13 @@ def _canonical_source(relative: str) -> Path:
     source = _source_repository_root() / "knowledge" / "skills" / relative
     if source.is_file():
         return source
-    raise RuntimeError(f"WikiSkill canonical asset is not available: {relative}")
+    raise RuntimeError(f"Wisk canonical asset is not available: {relative}")
 
 
 def _profile_source_root(profile: str) -> Path:
     root = _package_root() / "profiles" / profile
     if not root.is_dir():
-        raise ValueError(f"Unknown WikiSkill bootstrap profile: {profile}")
+        raise ValueError(f"Unknown Wisk bootstrap profile: {profile}")
     return root
 
 
@@ -85,12 +85,12 @@ def _managed_assets(profile: str) -> dict[str, bytes]:
 
 
 def _manifest(profile: str, assets: dict[str, bytes]) -> dict[str, Any]:
-    from wikiskill import __version__
+    from wisk import __version__
 
     return {
         "format_version": MANIFEST_FORMAT_VERSION,
         "profile": profile,
-        "wikiskill_version": __version__,
+        "wisk_version": __version__,
         "managed_files": {path: _sha256(content) for path, content in sorted(assets.items())},
     }
 
@@ -106,7 +106,7 @@ def _read_manifest(root: Path) -> dict[str, Any] | None:
         return None
     data = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(data, dict):
-        raise ValueError("Invalid WikiSkill manifest: expected a JSON object")
+        raise ValueError("Invalid Wisk manifest: expected a JSON object")
     return data
 
 
@@ -161,19 +161,19 @@ def init_repository(
     *,
     profile: str = DEFAULT_PROFILE,
 ) -> dict[str, Any]:
-    """Initialize one repository with the managed WikiSkill consumer bundle."""
+    """Initialize one repository with the managed Wisk consumer bundle."""
     repo = Path(repository).resolve()
     if not repo.is_dir():
         raise ValueError(f"Repository path is not a directory: {repo}")
 
-    target = repo / ".wikiskill"
+    target = repo / ".wisk"
     existing_manifest = _read_manifest(target) if target.is_dir() else None
     if existing_manifest is not None:
         return {
             "status": "already-initialized",
             "root": str(target),
             "profile": existing_manifest.get("profile"),
-            "next": f"wikiskill upgrade {repo}",
+            "next": f"wisk upgrade {repo}",
         }
 
     unmanaged = _existing_unmanaged_files(target)
@@ -183,7 +183,7 @@ def init_repository(
             "root": str(target),
             "files": [path.as_posix() for path in unmanaged],
             "message": (
-                "Existing .wikiskill state outside consumer/runtime knowledge namespaces "
+                "Existing .wisk state outside consumer/runtime knowledge namespaces "
                 "has no managed manifest; it was left untouched."
             ),
         }
@@ -197,7 +197,7 @@ def init_repository(
         _write_manifest(target, manifest)
         report = _validate_installation(target)
         if not bool(report["conformant"]):
-            raise ValueError("Generated WikiSkill bundle is not conformant")
+            raise ValueError("Generated Wisk bundle is not conformant")
     except Exception:
         if created_target:
             shutil.rmtree(target, ignore_errors=True)
@@ -214,7 +214,7 @@ def init_repository(
         "managed_files": len(assets),
         "preserved_files": len(unmanaged),
         "conformant": True,
-        "next": ('wikiskill session start-next "Faça o melhor avanço possível neste repositório"'),
+        "next": ('wisk session start-next "Faça o melhor avanço possível neste repositório"'),
     }
 
 
@@ -226,15 +226,15 @@ def _apply_upgrade(root: Path, old_managed: dict[str, str], assets: dict[str, by
 
 
 def upgrade_repository(repository: str | Path = ".") -> dict[str, Any]:
-    """Upgrade only WikiSkill-managed files, refusing edited managed state."""
+    """Upgrade only Wisk-managed files, refusing edited managed state."""
     repo = Path(repository).resolve()
-    target = repo / ".wikiskill"
+    target = repo / ".wisk"
     manifest = _read_manifest(target) if target.is_dir() else None
     if manifest is None:
         return {
             "status": "not-initialized",
             "root": str(target),
-            "message": "No managed WikiSkill manifest found; run wikiskill init first.",
+            "message": "No managed Wisk manifest found; run wisk init first.",
         }
     if manifest.get("format_version") != MANIFEST_FORMAT_VERSION:
         return {
@@ -248,7 +248,7 @@ def upgrade_repository(repository: str | Path = ".") -> dict[str, Any]:
     assets = _managed_assets(profile)
     raw_old_managed = manifest.get("managed_files") or {}
     if not isinstance(raw_old_managed, dict):
-        raise ValueError("Invalid WikiSkill manifest: managed_files must be an object")
+        raise ValueError("Invalid Wisk manifest: managed_files must be an object")
     old_managed = {str(path): str(digest) for path, digest in raw_old_managed.items()}
 
     conflicts: list[str] = []
@@ -270,8 +270,8 @@ def upgrade_repository(repository: str | Path = ".") -> dict[str, Any]:
         }
 
     new_manifest = _manifest(profile, assets)
-    with tempfile.TemporaryDirectory(prefix=".wikiskill-upgrade-", dir=repo) as temporary:
-        staged = Path(temporary) / ".wikiskill"
+    with tempfile.TemporaryDirectory(prefix=".wisk-upgrade-", dir=repo) as temporary:
+        staged = Path(temporary) / ".wisk"
         shutil.copytree(target, staged)
         _apply_upgrade(staged, old_managed, assets)
         _write_manifest(staged, new_manifest)

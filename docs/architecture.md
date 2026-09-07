@@ -1,6 +1,6 @@
 # Architecture & Design Boundaries
 
-`wikiskill` is a persistent agent runtime built on OKF. Its central job is now twofold:
+`wisk` is a persistent agent runtime built on OKF. Its central job is now twofold:
 
 1. guide live agent execution through typed, progressively satisfied run contracts;
 2. compile evidence from those runs into persistent knowledge and evolving skills.
@@ -17,7 +17,7 @@
                             │
                             ▼
 ┌────────────────────────────────────────────────────────┐
-│                   wikiskill                            │
+│                   wisk                            │
 │  - RunSpec + contract-guided live execution            │
 │  - LoopRun state, goals, readings, evidence, checks    │
 │  - Experience, Wiki, Skills, evaluation & evolution    │
@@ -28,7 +28,7 @@
                             ▼
 ┌────────────────────────────────────────────────────────┐
 │                  Consumers                             │
-│  - wikiskill itself (primary dogfooding consumer)      │
+│  - wisk itself (primary dogfooding consumer)      │
 │  - software-development agents                         │
 │  - newsroom / research / legal / other workflows       │
 └────────────────────────────────────────────────────────┘
@@ -36,8 +36,8 @@
 
 ### Invariants
 
-1. `wikiskill` does not reimplement frontmatter parsing, link resolution, graph compilation, schema compilation, or DuckDB translation.
-2. `okf-parser` remains domain-neutral and does not contain WikiSkill-specific execution or learning semantics.
+1. `wisk` does not reimplement frontmatter parsing, link resolution, graph compilation, schema compilation, or DuckDB translation.
+2. `okf-parser` remains domain-neutral and does not contain Wisk-specific execution or learning semantics.
 3. Run completion semantics belong to `RunSpec` contracts, not hard-coded branches in the runtime.
 4. Runtime operations such as `start` and `check` should use `okf-parser` as the source of structural truth.
 
@@ -70,11 +70,11 @@ The run artifact therefore acts as:
 - session memory;
 - handoff to the next run.
 
-A `RunSpec` is domain-neutral infrastructure with domain-specific instances. WikiSkill core defines generic component types; consumer skills and repositories define which categories of reading, goals, evidence and checks matter.
+A `RunSpec` is domain-neutral infrastructure with domain-specific instances. Wisk core defines generic component types; consumer skills and repositories define which categories of reading, goals, evidence and checks matter.
 
 ## 3. Learning layer
 
-WikiSkill has three canonical learning roles, expressed as `SessionType`s:
+Wisk has three canonical learning roles, expressed as `SessionType`s:
 
 ```text
         ┌─────────────────────────────────────────┐
@@ -124,7 +124,7 @@ Skill session decision
 
 This retains the asymmetric rollback principle: procedural state may be rolled back while evidence and durable knowledge remain.
 
-The consequence is that WikiSkill can learn not only *what an agent should know* and *how it should act*, but also *how future executions should be structured and validated*.
+The consequence is that Wisk can learn not only *what an agent should know* and *how it should act*, but also *how future executions should be structured and validated*.
 
 ## 4. Concept graph
 
@@ -187,4 +187,4 @@ Examples of specialized Experience contracts:
 
 Consumer RunSpecs may add domain-specific checks. The core roles define responsibility and lineage; they do not hard-code domain quality criteria.
 
-This keeps WikiSkill reusable while making consumer sessions more structured and auditable than prompt-only workflows.
+This keeps Wisk reusable while making consumer sessions more structured and auditable than prompt-only workflows.

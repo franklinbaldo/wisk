@@ -1,4 +1,4 @@
-"""Declarative eligibility and scheduling for WikiSkill SessionTypes."""
+"""Declarative eligibility and scheduling for Wisk SessionTypes."""
 
 from __future__ import annotations
 
@@ -8,14 +8,14 @@ from typing import Any
 
 from okf_parser import load_bundle
 
-from wikiskill.policy import PolicyWikiSkill
+from wisk.policy import PolicyWisk
 
 
-class CadenceWikiSkill(PolicyWikiSkill):
+class CadenceWisk(PolicyWisk):
     """Policy-aware runtime that can explain and select eligible sessions."""
 
     @classmethod
-    def open(cls, path: str | Path = "knowledge") -> CadenceWikiSkill:
+    def open(cls, path: str | Path = "knowledge") -> CadenceWisk:
         root = Path(path).resolve()
         return cls(bundle=load_bundle(root), root_path=root)
 

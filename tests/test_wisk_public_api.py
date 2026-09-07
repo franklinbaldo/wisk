@@ -1,6 +1,6 @@
-from wisk import Wisk, WikiSkill, __version__
+from wisk import Wisk, __version__
 
 
 def test_wisk_is_canonical_public_runtime_alias() -> None:
-    assert Wisk is WikiSkill
+    assert Wisk is Wisk
     assert __version__

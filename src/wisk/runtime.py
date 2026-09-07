@@ -1,4 +1,4 @@
-"""Core WikiSkill runtime facade."""
+"""Core Wisk runtime facade."""
 
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ _EXPERIENCE_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
 _EXPERIENCE_STATUSES = frozenset({"success", "failure", "partial", "observation"})
 
 
-class WikiSkill:
+class Wisk:
     """Contract-guided agent execution and learning runtime backed by OKF."""
 
     def __init__(self, bundle: Bundle, root_path: Path) -> None:
@@ -23,7 +23,7 @@ class WikiSkill:
         self.root_path = root_path
 
     @classmethod
-    def open(cls, path: str | Path = "knowledge") -> WikiSkill:
+    def open(cls, path: str | Path = "knowledge") -> Wisk:
         """Open an existing OKF knowledge bundle."""
         root = Path(path).resolve()
         bundle = load_bundle(root)
