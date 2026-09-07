@@ -161,3 +161,15 @@ class SessionWisk(HandoffWisk):
 
         result["check"] = self.check_run(result["run_id"])
         return result
+
+    @staticmethod
+    def _bool(value: Any) -> bool:
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, str):
+            normalized = value.strip().lower()
+            if normalized in {"true", "yes", "1", "on"}:
+                return True
+            if normalized in {"false", "no", "0", "off", ""}:
+                return False
+        return bool(value)
