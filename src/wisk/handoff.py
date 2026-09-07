@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+import hashlib
 import re
+import shutil
+import subprocess  # nosec B404 -- Git is invoked without a shell using a resolved executable.
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -15,6 +18,9 @@ from wisk.runtime import Wisk as BaseWisk
 _HANDOFF_STATUS_ACTIVE = "active"
 _HANDOFF_STATUS_ARCHIVED = "archived"
 _TERMINAL_GOAL_STATUSES = frozenset({"achieved", "carried_forward"})
+_HANDOFF_ENVIRONMENT_CHECK = "handoff-environment"
+_HANDOFF_DISPOSITION_CHECK = "handoff-disposition"
+_HANDOFF_DISPOSITIONS = frozenset({"accepted", "reframed", "rejected"})
 
 
 class HandoffWisk(BaseWisk):
@@ -22,7 +28,6 @@ class HandoffWisk(BaseWisk):
 
     @classmethod
     def open(cls, path: str | Path = "knowledge") -> HandoffWisk:
-        """Open an OKF bundle while preserving the Handoff-enabled runtime type."""
         root = Path(path).resolve()
         return cls(bundle=load_bundle(root), root_path=root)
 
@@ -55,16 +60,24 @@ class HandoffWisk(BaseWisk):
                     "id": canonical_id,
                     "title": record["title"],
                     "path": record["path"],
+                    "created_at": str(fm.get("created_at") or ""),
                     "created_by_run": str(fm.get("created_by_run") or ""),
                     "target_session_type": str(fm.get("target_session_type") or ""),
                     "state": str(fm.get("state") or ""),
                     "next_action": str(fm.get("next_action") or ""),
                     "references": references,
                     "goals": goals,
+                    "repository_head": str(fm.get("repository_head") or ""),
+                    "repository_branch": str(fm.get("repository_branch") or ""),
+                    "repository_dirty": bool(fm.get("repository_dirty")),
+                    "repository_diff_digest": str(fm.get("repository_diff_digest") or ""),
                     "relevant": relevant,
                 }
             )
-        return sorted(handoffs, key=lambda item: (not item["relevant"], item["id"]))
+        return sorted(
+            handoffs,
+            key=lambda item: (not item["relevant"], item["created_at"], item["id"]),
+        )
 
     def create_handoff(
         self,
@@ -92,8 +105,7 @@ class HandoffWisk(BaseWisk):
             goal = self._find_record("RunGoal", goal_identifier)
             goal_fm = goal["frontmatter"]
             if str(goal_fm.get("run") or "") != run_id:
-                msg = f"Handoff goal belongs to another run: {goal_identifier}"
-                raise ValueError(msg)
+                raise ValueError(f"Handoff goal belongs to another run: {goal_identifier}")
             canonical_goal = str(goal_fm.get("id") or goal["id"])
             if canonical_goal not in linked_goals:
                 linked_goals.append(canonical_goal)
@@ -105,6 +117,7 @@ class HandoffWisk(BaseWisk):
         if path.exists():
             raise FileExistsError(path)
 
+        baseline = self._repository_baseline()
         now = datetime.now(UTC).isoformat().replace("+00:00", "Z")
         frontmatter: dict[str, Any] = {
             "type": "Handoff",
@@ -117,6 +130,7 @@ class HandoffWisk(BaseWisk):
             "next_action": next_action,
             "references": references or [],
             "goals": linked_goals,
+            **baseline,
         }
         if target_session_type:
             frontmatter["target_session_type"] = target_session_type
@@ -128,7 +142,36 @@ class HandoffWisk(BaseWisk):
             self._reload()
             raise
         self._reload()
-        return {"id": canonical_id, "path": str(path), "status": _HANDOFF_STATUS_ACTIVE}
+        return {
+            "id": canonical_id,
+            "path": str(path),
+            "status": _HANDOFF_STATUS_ACTIVE,
+            "repository": baseline,
+        }
+
+    def attach_handoff_to_run(self, *, handoff: str, run: str) -> dict[str, Any]:
+        """Bind an active Handoff to its fresh consumer LoopRun without archiving it."""
+        handoff_record = self._find_record("Handoff", handoff)
+        handoff_fm = handoff_record["frontmatter"]
+        if str(handoff_fm.get("status") or "") != _HANDOFF_STATUS_ACTIVE:
+            raise ValueError(f"Handoff is not active: {handoff}")
+        run_record = self._find_record("LoopRun", run)
+        run_fm = dict(run_record["frontmatter"])
+        run_id = str(run_fm.get("id") or run_record["id"])
+        canonical_handoff = str(handoff_fm.get("id") or handoff_record["id"])
+        path = self.root_path / run_record["path"]
+        previous = path.read_text(encoding="utf-8")
+        run_fm["resumed_handoff"] = canonical_handoff
+        body = self._body_from_document(previous)
+        path.write_text(self._render_markdown(run_fm, body), encoding="utf-8")
+        try:
+            self._require_conformant_bundle()
+        except Exception:
+            path.write_text(previous, encoding="utf-8")
+            self._reload()
+            raise
+        self._reload()
+        return {"run": run_id, "resumed_handoff": canonical_handoff}
 
     def continue_handoff(
         self,
@@ -137,7 +180,7 @@ class HandoffWisk(BaseWisk):
         continued_by_run: str,
         resolution: str,
     ) -> dict[str, Any]:
-        """Archive a handoff and identify the LoopRun that resumed it."""
+        """Archive a handoff and identify the LoopRun that resolved its continuation."""
         self._find_record("LoopRun", continued_by_run)
         record = self._find_record("Handoff", handoff)
         frontmatter = dict(record["frontmatter"])
@@ -176,22 +219,21 @@ class HandoffWisk(BaseWisk):
         }
 
     def context(self, task: str) -> dict[str, Any]:
-        """Include active handoffs alongside learned and contract context."""
         result = super().context(task)
         result["active_handoffs"] = self.active_handoffs(task)
         return result
 
     def start_run(self, task: str, run_spec_id: str | None = None) -> dict[str, Any]:
-        """Start a run and surface resumable work before the agent proceeds."""
         result = super().start_run(task, run_spec_id)
         result["active_handoffs"] = self.active_handoffs(task)
         return result
 
     def check_run(self, run_id_or_path: str) -> dict[str, Any]:
-        """Require every run-owned goal to reach a terminal, accountable state."""
+        """Require terminal goals plus handoff revalidation/disposition when applicable."""
         result = super().check_run(run_id_or_path)
         run = self._find_record("LoopRun", run_id_or_path)
-        run_id = str(run["frontmatter"].get("id") or run["id"])
+        run_fm = run["frontmatter"]
+        run_id = str(run_fm.get("id") or run["id"])
         goals = self._run_components("RunGoal", run_id)
         handoffs_for_run = [
             item
@@ -205,6 +247,84 @@ class HandoffWisk(BaseWisk):
         ]
 
         lifecycle_requirements: list[dict[str, Any]] = []
+        resumed_handoff = str(run_fm.get("resumed_handoff") or "")
+        if resumed_handoff:
+            resumed_record = self._find_record("Handoff", resumed_handoff)
+            resumed_fm = resumed_record["frontmatter"]
+            baseline = {
+                "repository_head": str(resumed_fm.get("repository_head") or ""),
+                "repository_branch": str(resumed_fm.get("repository_branch") or ""),
+                "repository_dirty": bool(resumed_fm.get("repository_dirty")),
+                "repository_diff_digest": str(resumed_fm.get("repository_diff_digest") or ""),
+            }
+            checks = self._run_components("RunCheck", run_id)
+            by_kind = {
+                str(item["frontmatter"].get("kind") or ""): item["frontmatter"] for item in checks
+            }
+            environment = by_kind.get(_HANDOFF_ENVIRONMENT_CHECK)
+            if environment is None:
+                lifecycle_requirements.append(
+                    {
+                        "requirement": f"check:{_HANDOFF_ENVIRONMENT_CHECK}",
+                        "kind": _HANDOFF_ENVIRONMENT_CHECK,
+                        "handoff": resumed_handoff,
+                        "baseline": baseline,
+                        "message": (
+                            "Revalidate and document repository/environment state against the "
+                            "handoff baseline before relying on prior continuation instructions."
+                        ),
+                    }
+                )
+            elif str(environment.get("status") or "") != "pass":
+                lifecycle_requirements.append(
+                    {
+                        "requirement": f"check:{_HANDOFF_ENVIRONMENT_CHECK}:resolved",
+                        "kind": _HANDOFF_ENVIRONMENT_CHECK,
+                        "handoff": resumed_handoff,
+                        "baseline": baseline,
+                        "observed": str(environment.get("status") or ""),
+                        "message": (
+                            "Resolve repository/environment drift before continuing the handoff."
+                        ),
+                    }
+                )
+
+            disposition = by_kind.get(_HANDOFF_DISPOSITION_CHECK)
+            disposition_value = self._disposition_value(disposition)
+            disposition_evidence = str((disposition or {}).get("evidence") or "").strip()
+            disposition_invalid = disposition is not None and (
+                str(disposition.get("status") or "") != "pass"
+                or disposition_value not in _HANDOFF_DISPOSITIONS
+                or (disposition_value in {"reframed", "rejected"} and not disposition_evidence)
+            )
+            if disposition is None:
+                lifecycle_requirements.append(
+                    {
+                        "requirement": f"check:{_HANDOFF_DISPOSITION_CHECK}",
+                        "kind": _HANDOFF_DISPOSITION_CHECK,
+                        "handoff": resumed_handoff,
+                        "expected": sorted(_HANDOFF_DISPOSITIONS),
+                        "message": (
+                            "Evaluate the transferred handoff goals and document whether they are "
+                            "accepted, reframed, or rejected with rationale/evidence."
+                        ),
+                    }
+                )
+            elif disposition_invalid:
+                lifecycle_requirements.append(
+                    {
+                        "requirement": f"check:{_HANDOFF_DISPOSITION_CHECK}:resolved",
+                        "kind": _HANDOFF_DISPOSITION_CHECK,
+                        "handoff": resumed_handoff,
+                        "expected": sorted(_HANDOFF_DISPOSITIONS),
+                        "observed": disposition_value or str(disposition.get("status") or ""),
+                        "message": (
+                            "Record a passing handoff disposition as accepted, reframed, "
+                            "or rejected; reframed/rejected dispositions require evidence."
+                        ),
+                    }
+                )
+
         if not goals:
             lifecycle_requirements.append(
                 {
@@ -232,8 +352,8 @@ class HandoffWisk(BaseWisk):
                             "observed": status,
                             "expected": sorted(_TERMINAL_GOAL_STATUSES),
                             "message": (
-                                f"Resolve RunGoal '{goal_id}' as achieved or "
-                                "carried_forward before closing the LoopRun."
+                                f"Resolve RunGoal '{goal_id}' as achieved or carried_forward "
+                                "before closing the LoopRun."
                             ),
                         }
                     )
@@ -267,9 +387,68 @@ class HandoffWisk(BaseWisk):
             result["conformant"] = False
             if result["next_action"].get("kind") == "complete":
                 result["next_action"] = dict(lifecycle_requirements[0])
+        result["resumed_handoff"] = resumed_handoff or None
         result["active_handoffs_created"] = len(active_for_run)
         result["handoffs_created"] = len(handoffs_for_run)
         return result
+
+    @staticmethod
+    def _disposition_value(disposition: dict[str, Any] | None) -> str:
+        if disposition is None:
+            return ""
+        result = str(disposition.get("result") or "").strip().lower()
+        return result.split(":", 1)[0].split(None, 1)[0] if result else ""
+
+    def _repository_baseline(self) -> dict[str, Any]:
+        repo = self._repository_root()
+        if repo is None:
+            return {
+                "repository_head": "",
+                "repository_branch": "",
+                "repository_dirty": False,
+                "repository_diff_digest": "",
+            }
+
+        git_binary = shutil.which("git")
+        if git_binary is None:
+            return {
+                "repository_head": "",
+                "repository_branch": "",
+                "repository_dirty": False,
+                "repository_diff_digest": "",
+            }
+
+        def git(*args: str) -> str:
+            # The executable is resolved once, shell=False is explicit, and every option is
+            # chosen by Wisk. The repository path is passed as one argv element, never a shell.
+            result = subprocess.run(  # nosec B603
+                [git_binary, "-C", str(repo), *args],
+                check=False,
+                capture_output=True,
+                text=True,
+                shell=False,
+            )
+            return result.stdout.strip() if result.returncode == 0 else ""
+
+        head = git("rev-parse", "HEAD")
+        branch = git("rev-parse", "--abbrev-ref", "HEAD")
+        status = git("status", "--porcelain=v1", "--untracked-files=all")
+        diff_digest = (
+            f"sha256:{hashlib.sha256(status.encode('utf-8')).hexdigest()}" if status else ""
+        )
+        return {
+            "repository_head": head,
+            "repository_branch": branch,
+            "repository_dirty": bool(status),
+            "repository_diff_digest": diff_digest,
+        }
+
+    def _repository_root(self) -> Path | None:
+        candidates = [self.root_path, *self.root_path.parents]
+        for candidate in candidates:
+            if (candidate / ".git").exists():
+                return candidate
+        return None
 
     def _require_conformant_bundle(self) -> None:
         report = check_bundle(

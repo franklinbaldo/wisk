@@ -26,11 +26,9 @@ class SessionWisk(HandoffWisk):
         return cls(bundle=load_bundle(root), root_path=root)
 
     def session_types(self) -> list[dict[str, Any]]:
-        """List declared SessionTypes with their effective inherited configuration."""
         return [self.effective_session_type(item["id"]) for item in self._records("SessionType")]
 
     def effective_session_type(self, identifier: str) -> dict[str, Any]:
-        """Resolve one SessionType through a shallow, cycle-safe inheritance chain."""
         return self._resolve_session_type(identifier, stack=())
 
     def _resolve_session_type(self, identifier: str, stack: tuple[str, ...]) -> dict[str, Any]:
@@ -56,7 +54,6 @@ class SessionWisk(HandoffWisk):
         return effective
 
     def effective_run_spec(self, identifier: str) -> dict[str, Any]:
-        """Resolve a RunSpec and append inherited operational requirements."""
         return self._resolve_run_spec(identifier, stack=())
 
     def _resolve_run_spec(self, identifier: str, stack: tuple[str, ...]) -> dict[str, Any]:
@@ -134,6 +131,7 @@ class SessionWisk(HandoffWisk):
             self._reload()
             raise
         self._reload()
+
         result["run_spec"] = canonical_spec_id
         result["session_type"] = session["id"]
         result["session"] = {
@@ -142,5 +140,36 @@ class SessionWisk(HandoffWisk):
             "nudges": list(session.get("nudges", [])),
             "inheritance": list(session.get("inheritance", [])),
         }
+
+        cadence = session.get("cadence") or {}
+        if self._bool(cadence.get("handoff_compatible")):
+            lineage = set(str(item) for item in session.get("inheritance", []))
+            lineage.add(str(session["id"]))
+            candidates = [
+                item
+                for item in self.active_handoffs(task)
+                if not item.get("target_session_type")
+                or str(item.get("target_session_type") or "") in lineage
+            ]
+            if candidates:
+                selected_handoff = candidates[0]
+                self.attach_handoff_to_run(
+                    handoff=str(selected_handoff["id"]),
+                    run=str(result["run_id"]),
+                )
+                result["resumed_handoff"] = selected_handoff["id"]
+
         result["check"] = self.check_run(result["run_id"])
         return result
+
+    @staticmethod
+    def _bool(value: Any) -> bool:
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, str):
+            normalized = value.strip().lower()
+            if normalized in {"true", "yes", "1", "on"}:
+                return True
+            if normalized in {"false", "no", "0", "off", ""}:
+                return False
+        return bool(value)

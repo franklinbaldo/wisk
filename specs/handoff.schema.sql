@@ -9,6 +9,10 @@ CREATE TABLE "Handoff" (
     "next_action" VARCHAR,
     "references" VARCHAR[],
     "goals" VARCHAR[],
+    "repository_head" VARCHAR,
+    "repository_branch" VARCHAR,
+    "repository_dirty" BOOLEAN,
+    "repository_diff_digest" VARCHAR,
     "continued_by_run" VARCHAR,
     "archived_at" TIMESTAMPTZ,
     "resolution" VARCHAR
