@@ -50,6 +50,37 @@ def test_explicit_session_type_override_starts_without_cadence_reason(tmp_path: 
     assert result["selection_reason"] == "explicit-override"
 
 
+def test_untargeted_handoff_is_selected_as_handoff_continuation(tmp_path: Path) -> None:
+    knowledge = _initialized_bundle(tmp_path)
+    handoff_path = knowledge / "local" / "handoffs" / "untargeted.md"
+    _write_concept(
+        handoff_path,
+        {
+            "type": "Handoff",
+            "id": "handoffs/untargeted",
+            "title": "Continue generic work",
+            "created_at": "2026-09-07T00:00:00Z",
+            "status": "active",
+            "created_by_run": "runs/historical-source",
+            "state": "Useful work remains without a specialized consumer.",
+            "next_action": "Revalidate the environment and decide whether to continue.",
+            "references": [],
+            "goals": [],
+            "repository_head": "abc123",
+            "repository_branch": "main",
+            "repository_dirty": False,
+            "repository_diff_digest": "",
+        },
+    )
+
+    started = Wisk.open(knowledge).start()
+
+    assert started["selection_reason"] == "handoff-continuation"
+    assert started["next"]["kind"] == "handoff-environment"
+    run = Wisk.open(knowledge)._find_record("LoopRun", str(started["run"]))
+    assert run["frontmatter"]["resumed_handoff"] == "handoffs/untargeted"
+
+
 def test_resumed_handoff_requires_environment_then_disposition(tmp_path: Path) -> None:
     knowledge = _initialized_bundle(tmp_path)
     handoff_path = knowledge / "local" / "handoffs" / "resume-me.md"
