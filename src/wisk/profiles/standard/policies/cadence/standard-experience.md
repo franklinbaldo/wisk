@@ -9,4 +9,4 @@ handoff_compatible: true
 
 # Standard Experience cadence
 
-Experience is the default work session when an explicit `start-next` invocation has no higher-priority synthesis or skill evolution due.
+Experience is the ordinary-work fallback for `wisk start` when no higher-priority synthesis or skill-evolution session is due.

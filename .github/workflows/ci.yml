@@ -58,9 +58,21 @@ jobs:
           WHEEL="$GITHUB_WORKSPACE/$(find dist -name 'wisk-*.whl' -print -quit)"
           CONSUMER="$(mktemp -d)"
           cd "$CONSUMER"
-          uvx --from "$WHEEL" wisk init .
+          uvx --from "$WHEEL" wisk init
           test -f .wisk/manifest.json
-          uvx --from "$WHEEL" wisk session start-next "Do the best useful work available"
+          uvx --from "$WHEEL" wisk start > first.json
+          uvx --from "$WHEEL" wisk start > second.json
+          python - <<'PY'
+          import json
+
+          first = json.load(open("first.json", encoding="utf-8"))
+          second = json.load(open("second.json", encoding="utf-8"))
+          assert first["state"] == "next"
+          assert first["run"]
+          assert second["run"] == first["run"]
+          assert second["resumed"] is True
+          assert second["selection_reason"] == "active-run-resume"
+          PY
           find .wisk/knowledge/experiences/runs -name '*.md' -print -quit | grep -q .
 
       - name: Run Pytest
