@@ -1,0 +1,115 @@
+name: Complete Wisk rename
+
+on:
+  push:
+    branches: [rename/wisk-package]
+
+permissions:
+  contents: write
+
+jobs:
+  rename:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Remove compatibility layer and rename everything
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          # The temporary public wrapper is replaced by the real package.
+          rm -rf src/wisk
+          mv src/wikiskill src/wisk
+
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          root = Path('.')
+          skip = {'.git'}
+
+          # Rename remaining paths first, deepest paths first.
+          paths = sorted(
+              (p for p in root.rglob('*') if not any(part in skip for part in p.parts)),
+              key=lambda p: len(p.parts),
+              reverse=True,
+          )
+          for path in paths:
+              new_name = path.name.replace('wikiskill', 'wisk').replace('WikiSkill', 'Wisk').replace('WIKISKILL', 'WISK')
+              if new_name != path.name and path.exists():
+                  target = path.with_name(new_name)
+                  path.rename(target)
+
+          # Rewrite every UTF-8 text file. Binary files are skipped.
+          for path in root.rglob('*'):
+              if not path.is_file() or any(part in skip for part in path.parts):
+                  continue
+              try:
+                  text = path.read_text(encoding='utf-8')
+              except (UnicodeDecodeError, OSError):
+                  continue
+              new = text.replace('wikiskill', 'wisk').replace('WikiSkill', 'Wisk').replace('WIKISKILL', 'WISK')
+              if new != text:
+                  path.write_text(new, encoding='utf-8')
+
+          # Remove rename-transition prose from README: Wisk has no legacy mode.
+          readme = Path('README.md')
+          if readme.exists():
+              text = readme.read_text(encoding='utf-8')
+              text = re.sub(r'\n## Rename compatibility\n.*?(?=\n## License\n)', '\n', text, flags=re.S)
+              text = text.replace(' The on-disk directory name remains `.wisk/` during the rename transition so existing consumers are not broken.', '')
+              text = text.replace('\nThe old `wisk` executable remains temporarily available as a compatibility alias.\n', '\n')
+              text = text.replace('\n`Wisk` and the legacy `wisk` module remain available temporarily for compatibility.\n', '\n')
+              readme.write_text(text, encoding='utf-8')
+
+          # Normalize pyproject after mechanical replacement removed the old name.
+          pyproject = Path('pyproject.toml')
+          text = pyproject.read_text(encoding='utf-8')
+          text = text.replace('# Temporary compatibility alias for existing consumers.\nwisk = "wisk.cli:app"\n', '')
+          text = text.replace('packages = ["src/wisk", "src/wisk"]', 'packages = ["src/wisk"]')
+          text = text.replace('paths = ["src/wisk", "src/wisk"]', 'paths = ["src/wisk"]')
+          pyproject.write_text(text, encoding='utf-8')
+
+          # Remove the one-off migration workflow from the resulting repository.
+          Path('.github/workflows/rename-wisk-clean.yml').unlink()
+          PY
+
+          # Prove the old product name is gone from the working tree.
+          if git grep -n -i 'wikiskill'; then
+            echo 'Legacy name still present' >&2
+            exit 1
+          fi
+
+          uv lock
+          uv sync
+          uv run ruff check . --fix
+          uv run ruff format .
+          uv run pytest -q
+
+          # Formatting or lock regeneration must not reintroduce the old name.
+          if git grep -n -i 'wikiskill'; then
+            echo 'Legacy name reintroduced after tooling' >&2
+            exit 1
+          fi
+
+      - name: Commit clean rename
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m "refactor!: complete clean rename to Wisk"
+          git push origin HEAD:rename/wisk-package
