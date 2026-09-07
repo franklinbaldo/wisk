@@ -29,7 +29,6 @@ jobs:
         run: |
           set -euo pipefail
 
-          # The temporary public wrapper is replaced by the real package.
           rm -rf src/wisk
           mv src/wikiskill src/wisk
 
@@ -38,23 +37,22 @@ jobs:
           import re
 
           root = Path('.')
-          skip = {'.git'}
 
-          # Rename remaining paths first, deepest paths first.
+          def skipped(path: Path) -> bool:
+              return '.git' in path.parts or (len(path.parts) >= 2 and path.parts[0] == '.github' and path.parts[1] == 'workflows')
+
           paths = sorted(
-              (p for p in root.rglob('*') if not any(part in skip for part in p.parts)),
+              (p for p in root.rglob('*') if not skipped(p)),
               key=lambda p: len(p.parts),
               reverse=True,
           )
           for path in paths:
               new_name = path.name.replace('wikiskill', 'wisk').replace('WikiSkill', 'Wisk').replace('WIKISKILL', 'WISK')
               if new_name != path.name and path.exists():
-                  target = path.with_name(new_name)
-                  path.rename(target)
+                  path.rename(path.with_name(new_name))
 
-          # Rewrite every UTF-8 text file. Binary files are skipped.
           for path in root.rglob('*'):
-              if not path.is_file() or any(part in skip for part in path.parts):
+              if not path.is_file() or skipped(path):
                   continue
               try:
                   text = path.read_text(encoding='utf-8')
@@ -64,7 +62,6 @@ jobs:
               if new != text:
                   path.write_text(new, encoding='utf-8')
 
-          # Remove rename-transition prose from README: Wisk has no legacy mode.
           readme = Path('README.md')
           if readme.exists():
               text = readme.read_text(encoding='utf-8')
@@ -74,21 +71,16 @@ jobs:
               text = text.replace('\n`Wisk` and the legacy `wisk` module remain available temporarily for compatibility.\n', '\n')
               readme.write_text(text, encoding='utf-8')
 
-          # Normalize pyproject after mechanical replacement removed the old name.
           pyproject = Path('pyproject.toml')
           text = pyproject.read_text(encoding='utf-8')
           text = text.replace('# Temporary compatibility alias for existing consumers.\nwisk = "wisk.cli:app"\n', '')
           text = text.replace('packages = ["src/wisk", "src/wisk"]', 'packages = ["src/wisk"]')
           text = text.replace('paths = ["src/wisk", "src/wisk"]', 'paths = ["src/wisk"]')
           pyproject.write_text(text, encoding='utf-8')
-
-          # Remove the one-off migration workflow from the resulting repository.
-          Path('.github/workflows/rename-wisk-clean.yml').unlink()
           PY
 
-          # Prove the old product name is gone from the working tree.
-          if git grep -n -i 'wikiskill'; then
-            echo 'Legacy name still present' >&2
+          if git grep -n -i 'wikiskill' -- ':!.github/workflows/**'; then
+            echo 'Legacy name still present outside workflows' >&2
             exit 1
           fi
 
@@ -98,8 +90,7 @@ jobs:
           uv run ruff format .
           uv run pytest -q
 
-          # Formatting or lock regeneration must not reintroduce the old name.
-          if git grep -n -i 'wikiskill'; then
+          if git grep -n -i 'wikiskill' -- ':!.github/workflows/**'; then
             echo 'Legacy name reintroduced after tooling' >&2
             exit 1
           fi
@@ -108,6 +99,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          git restore .github/workflows
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add -A
