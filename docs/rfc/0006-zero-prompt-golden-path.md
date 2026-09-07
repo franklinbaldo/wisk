@@ -22,9 +22,9 @@ wisk init
 wisk start
 ```
 
-`wisk start` means: start the best eligible session and do the best useful work available in this repository.
+`wisk start` means: resume useful work when a compatible live run already exists; otherwise select the best eligible SessionType and start the best useful work available in the repository.
 
-The user may provide constraints only when they actually intend to override the default:
+Optional constraints are explicit exceptions:
 
 ```bash
 wisk start --session-type wiki
@@ -33,46 +33,42 @@ wisk start "Improve CLI ergonomics"
 wisk start "Review current knowledge" --session-type wiki
 ```
 
-The default belongs to Wisk, not to prompts copied into every consumer repository.
-
-This RFC supersedes the operational golden-path entrypoint in RFC 0005. RFC 0005 remains authoritative for the broader consumer/product boundary except where this RFC changes the invocation model.
+RFC 0006 supersedes the operational golden-path entrypoint and explicit-start semantics of RFC 0005. RFC 0005 remains authoritative for the broader consumer/product boundary, managed state, bootstrap/upgrade ownership, standard profile, and local specialization except where this RFC changes invocation semantics.
 
 ## Motivation
 
-The current consumer quickstart exposes implementation details:
+The previous consumer quickstart exposed implementation details:
 
 ```bash
 wisk init .
 wisk session start-next "Do the best useful work available in this repository"
 ```
 
-Three pieces are unnecessary in the normal case:
+The normal caller should not need to repeat the repository default, know the scheduler's `start-next` vocabulary, or restate Wisk's generic purpose.
 
-1. `.` is already the natural default repository;
-2. `session start-next` exposes the scheduler's internal concept of the next eligible session;
-3. the generic task text merely restates Wisk's default purpose.
+The current public surface also duplicates operations between Cyclopts and FastMCP, and `wisk start` currently exposes positional task, RunSpec, and SessionType arguments. This RFC therefore reshapes an existing interface rather than merely adding a shorter alias.
 
-The current CLI also already exposes `wisk start` with positional task, RunSpec, and SessionType arguments. Therefore this RFC is not adding a new command: it is deliberately reshaping an existing public interface. The migration must remove positional ambiguity rather than preserve it accidentally.
-
-There is a second source of duplication today: Wisk separately defines Cyclopts commands and FastMCP tools for the same operations. That duplicates signatures, defaults, descriptions, and potentially behavior. Since FastMCP tools already provide a typed operation schema that can serve agent and command-line callers, the public operation should be defined once and projected into the CLI whenever practical.
+A further requirement follows from unattended scheduling: a scheduler may invoke `wisk start` after a process crash or while a previous run remains in `scaffold` or `active`. The runtime must recover from persisted state instead of accumulating orphan scaffolds or requiring process memory.
 
 ## Design principles
 
 **Defaults encode policy; arguments encode exceptions.**
 
-**Define operations once.** A Wisk operation should have one canonical typed definition. CLI and MCP are transport/presentation surfaces, not separate behavioral APIs.
+**Define operations once.** A Wisk operation has one canonical typed definition. CLI and MCP are transport/presentation surfaces, not independent behavioral APIs.
 
-A useful test for the public interface is:
+**Persisted state drives execution.** Every state-changing Wisk operation MUST return the next actionable contract state or a terminal state, and that next state MUST be derivable solely from persisted OKF state plus the operation's explicit inputs. Process-local memory must not be required to resume a run.
 
-> After `wisk init`, can an unattended scheduler invoke only `wisk start` indefinitely without maintaining a second orchestration prompt?
+A useful acceptance test is:
+
+> After `wisk init`, can an unattended scheduler invoke only `wisk start` indefinitely, across process restarts, without maintaining a second orchestration prompt or run-local memory?
 
 The answer should be yes.
 
 ## Canonical operation surface
 
-FastMCP tools are the canonical typed public operation definitions for Wisk operations that naturally map to MCP tools.
+FastMCP tools are the canonical typed public operation definitions for operations that naturally map to MCP tools.
 
-A canonical start operation is conceptually:
+Conceptually:
 
 ```python
 @mcp.tool(name="start")
@@ -81,15 +77,11 @@ def start(
     *,
     session_type: str | None = None,
     run_spec: str | None = None,
-) -> StartResult:
+) -> OperationResult:
     ...
 ```
 
-The precise implementation may delegate immediately into the Wisk runtime/domain layer, but there must not be a second independently specified CLI signature with different defaults or semantics.
-
-The CLI should be generated or projected from the canonical FastMCP tool schema when FastMCP can express the intended terminal UX faithfully. Wisk may keep a thin handwritten CLI adapter only where terminal-specific interaction materially improves usability and cannot be represented cleanly by the tool schema. Such an adapter must delegate to the same canonical operation and must not redefine behavior.
-
-Cyclopts therefore remains an implementation detail available for CLI projection and exceptional terminal UX, not a second source of truth for the API.
+The runtime/domain layer owns behavior. The canonical tool owns the public typed schema. The CLI is generated/projected from that schema when practical, or implemented as a thin Cyclopts adapter when terminal-specific UX materially improves usability. A handwritten CLI adapter must delegate to the same canonical operation and must not redefine defaults, selection, errors, or result semantics.
 
 This rule applies progressively to other duplicated Wisk operations, not only `start`.
 
@@ -117,16 +109,18 @@ wisk start
 
 With no arguments, Wisk:
 
-1. resolves the initialized consumer repository from the current working directory;
+1. resolves the initialized consumer repository;
 2. evaluates SessionType eligibility, cadence, priority, and blockers;
-3. selects the best eligible SessionType;
-4. uses the standard internal work intent: do the best useful work available in the repository;
-5. resolves the applicable RunSpec and context policy;
-6. resolves whether an active compatible handoff should be continued;
-7. creates the live run scaffold before substantive work;
-8. returns actionable execution context.
+3. determines the SessionType that ordinary selection would target;
+4. checks persisted state for a compatible live LoopRun in `scaffold` or `active`;
+5. if a compatible live run exists, resumes it by recomputing and returning its current actionable state;
+6. otherwise, if policy permits a new run, selects the best eligible SessionType;
+7. uses Wisk's internal default intent to do the best useful work available in the repository;
+8. resolves RunSpec, context policy, and compatible handoff state;
+9. creates the live run scaffold;
+10. returns the canonical operation envelope including the next actionable state.
 
-The exact default task string is an internal product default. It should not become consumer configuration merely because the runtime needs a value internally.
+The literal default task string is an internal product detail. It must not become consumer configuration or determine every run's human-facing title.
 
 ### Explicit task
 
@@ -134,11 +128,11 @@ The exact default task string is an internal product default. It should not beco
 wisk start "Improve CLI ergonomics"
 ```
 
-The task is optional. Supplying it constrains the work while ordinary SessionType selection remains in effect unless the caller also provides an explicit override.
+The task is optional. Supplying it constrains the work while ordinary SessionType selection remains in effect unless the caller also supplies a structural override.
 
 ### Named structural overrides
 
-RunSpec and SessionType are structural controls and therefore must be named flags, not additional positional arguments:
+RunSpec and SessionType are structural controls and must be named:
 
 ```bash
 wisk start --session-type wiki
@@ -146,109 +140,145 @@ wisk start --run-spec local-review
 wisk start "Review current knowledge" --session-type wiki --run-spec local-review
 ```
 
-This removes the current positional ambiguity between free-form task text and structural identifiers.
+The equivalent MCP operation exposes the same fields with the same defaults.
 
-The equivalent MCP call exposes the same fields with the same defaults. No translation layer may silently reinterpret them.
+## Start is resumable and idempotent over compatible live work
+
+`wisk start` is not blindly "create a run". It is the idempotent golden-path operation for entering useful work.
+
+If persisted OKF state already contains a compatible LoopRun in `scaffold` or `active`, `start` should return that run and its recomputed `next` state rather than create a duplicate.
+
+Compatibility must be determined from persisted, auditable data: selected/pinned SessionType, effective RunSpec, explicit task constraints where relevant, and policy. It must not depend on process-local session state.
+
+`max_parallel` remains authoritative. The existence of one active run does not universally forbid another; rather:
+
+- when policy does not permit another compatible parallel run, `start` resumes the existing run;
+- when policy permits parallelism and the caller's explicit constraints distinguish a new run, creation may proceed;
+- ordinary zero-prompt scheduling should prefer resumption over multiplying indistinguishable scaffolds.
+
+If persisted state is ambiguous in a way policy cannot resolve safely, the operation returns `blocked` with structured remediation rather than guessing.
+
+This makes crash recovery, scheduler restarts, and repeated hourly invocation all use the same operation.
 
 ## SessionType override semantics
 
 `--session-type X` is an explicit override.
 
-The override bypasses positive eligibility reasons such as interval, threshold, or `on_demand`. The resulting selection records `selection_reason: explicit-override`.
+It bypasses positive eligibility reasons such as interval, threshold, or `on_demand`, and records `selection_reason: explicit-override`.
 
-The override does **not** bypass blockers such as:
+It does **not** bypass blockers such as cooldown, max parallelism, hourly budget, or other hard safety/resource blockers.
 
-- cooldown;
-- max parallelism;
-- hourly budget;
-- other hard safety/resource blockers introduced by policy.
+`on_demand` remains a scheduling/fallback signal and must not be overloaded to mean explicit user override. A SessionType may have `on_demand: false` and still be explicitly startable by id.
 
-In other words, the caller may say "start this type even though it is not due" but not "ignore runtime safety and resource limits".
+## Canonical operation envelope
 
-`on_demand` must not be overloaded for this behavior. It remains a scheduling/fallback signal. A SessionType may have `on_demand: false` and still be explicitly startable by id.
+Expected domain states are returned through one stable envelope rather than split between successful payloads and generic exceptions.
 
-This preserves the semantics already present in the runtime, where explicit SessionType pinning is distinct from cadence-driven selection, while making the distinction auditable and explicit in the public contract.
+Conceptually:
 
-## Inspection remains separate
-
-```bash
-wisk session next
+```json
+{"run": "runs/123", "state": "next", "next": {"operation": "run_reading", "required": ["kind", "reference", "finding"]}}
 ```
 
-The distinction is intentional:
+```json
+{"run": null, "state": "blocked", "blockers": ["hourly-budget"], "remediation": [{"action": "retry_later"}]}
+```
 
-- `wisk start` expresses user intent: start useful work;
-- `wisk session next` exposes scheduler state for inspection/debugging.
+```json
+{"run": "runs/123", "state": "done"}
+```
 
-The golden path should not require the caller to turn the result of `next` into a separate `start-next` operation.
+The stable state vocabulary begins with:
 
-Whether `session next` itself remains handwritten CLI, becomes a projected tool, or is renamed later is outside this RFC. Its behavior must still come from one canonical operation.
+- `next`: the run has an actionable contract requirement;
+- `blocked`: expected policy/domain state currently prevents progress;
+- `done`: the operation/run has reached a terminal successful state.
+
+Additional terminal failure/cancelled states may be introduced when the lifecycle contract requires them, but callers should not need separate parsers for normal progress and expected blocking.
+
+Expected cadence, eligibility, budget, or parallelism blocking is domain state and should not be represented as a generic `ValueError`. Exceptions remain appropriate for exceptional conditions such as corrupted bundles, invalid persisted invariants, or I/O/runtime failures.
+
+## `next` is a stable contract
+
+The existing runtime already computes unsatisfied requirements through `check_run`; RFC 0006 promotes that capability into the public operation contract.
+
+Every state-changing operation MUST return either:
+
+- `state: next` plus a structured `next` action;
+- `state: blocked` plus structured blockers/remediation; or
+- a terminal state such as `done`.
+
+`next` is not primarily a shell command. It is a transport-neutral description of the next typed operation and the information required to satisfy it. A CLI adapter may additionally render a convenient literal command for humans, but command text is presentation rather than the canonical protocol.
+
+The decisive invariant is:
+
+> `next` MUST be a pure function of persisted OKF state and explicit operation inputs.
+
+A fresh process opening the same initialized repository must be able to recompute the same actionable contract state without receiving hidden state from the process that created the run.
+
+This property lets the runtime drive the agent instead of merely recording what an external prompt decided to do.
 
 ## Handoffs
 
 A compatible pending handoff is execution state, not a reason for the caller to choose another command.
 
-When policy selects continuation, `wisk start` starts a **fresh LoopRun of the target SessionType with the handoff injected into context**. It does not reopen or mutate the previous LoopRun.
+When no compatible live run already exists and policy selects handoff continuation, `wisk start` creates a **fresh LoopRun of the target SessionType with the handoff injected into context**. It does not reopen the historical run that produced the handoff.
 
-The new LoopRun records the handoff reference, for example as `resumed_handoff`, and records why continuation was selected.
+The new LoopRun records the handoff reference, for example as `resumed_handoff`, and the selection reason.
 
-The handoff is **not archived at start**. It remains active until the new run reaches an outcome that successfully consumes or supersedes it. This prevents a failed or interrupted resumed run from losing the recovery path.
+The handoff is **not archived at start**. It remains active until an outcome successfully consumes or supersedes it. A failed/interrupted resumed run therefore does not erase the recovery path.
 
-When multiple compatible handoffs exist and the caller supplied a task, existing relevance ordering may be used. In zero-prompt execution, where no explicit task exists, selection must be deterministic. The initial policy is oldest compatible active handoff first. A later RFC may introduce explicit Handoff priority without changing the `wisk start` contract.
+If the resumed LoopRun itself remains live across a process restart, subsequent `wisk start` invocations resume that live LoopRun through the same idempotent-start rule; they do not create another handoff-consumer run.
 
-Explicit handoff inspection and continuation commands remain available for debugging and manual control.
+When several compatible handoffs exist and the caller supplies a task, existing relevance ordering may be used. With no explicit task, initial selection is deterministic: oldest compatible active handoff first. A later RFC may introduce explicit Handoff priority without changing `wisk start`.
 
 ## Run identity under zero-prompt
 
-The internal default task must not cause every zero-prompt run to receive the same slug and title.
+The internal default intent must not cause every zero-prompt run to have the same title/slug.
 
-When no task is supplied:
-
-- the run title should be derived from the selected SessionType and resolved work/context rather than from the literal default task string;
-- generated slugs must remain deterministic enough for auditability and unique enough to avoid meaningless suffix churn;
-- the effective default intent should still be recorded separately from the human-facing run title.
+When no task is supplied, the human-facing title should derive from selected SessionType and resolved work/context. The effective default intent remains separately auditable.
 
 ## Initialized-repository boundary
 
-`wisk start` must require an initialized consumer repository.
+`wisk start` requires an initialized consumer repository.
 
-Path resolution must not silently reinterpret an uninitialized consumer repository as Wisk's dogfood `knowledge/` layout. If the current repository has not been initialized, `start` should fail with a concise actionable message directing the caller to `wisk init`.
+Path resolution must not silently reinterpret an uninitialized repository as Wisk's dogfood `knowledge/` layout. Failure should be concise and actionable, directing the caller to `wisk init`.
 
-Dogfood/development layout resolution may remain available only when the runtime can positively identify that layout rather than by fallback.
+Dogfood/development layout support may remain only when positively identified. Repository/path overrides may exist at lower layers or through explicit advanced configuration; they are not part of the ordinary golden path.
 
 ## Runtime responsibilities
 
-Zero-prompt does not mean zero contract. It means moving orchestration knowledge to the component that owns it.
+Zero-prompt moves orchestration knowledge to the component that owns it.
 
-The underlying start operation should progressively own the normal-case decisions for:
+The runtime should own:
 
-- SessionType eligibility, cadence, priority, and explicit pinning;
+- resumable live-run discovery;
+- SessionType eligibility, cadence, priority, blockers, and explicit pinning;
 - compatible handoff continuation;
-- RunSpec resolution;
-- context-policy resolution;
-- run-scaffold creation before substantive execution;
-- discovery of the next unsatisfied contract requirement;
+- RunSpec and context-policy resolution;
+- scaffold creation;
+- derivation of the next unsatisfied contract requirement from persisted state;
 - validation after state transitions;
-- actionable guidance about readings, evidence, checks, and completion.
+- structured blockers and remediation;
+- actionable guidance through the canonical envelope.
 
-Low-level operations such as run reading, goal, decision, evidence, check, and outcome remain valuable primitives and debugging/automation interfaces. Their existence should not require consumer prompts to reproduce Wisk's execution algorithm.
+Low-level operations such as run reading, goal, decision, evidence, check, and outcome remain useful primitives. They should participate in the same state envelope and return the newly derived `next`/terminal state after mutation.
+
+## Inspection remains separate
+
+Inspection operations such as `session next` may remain available for debugging and scheduler introspection, but the golden path does not require a caller to inspect and then manually translate the answer into another start operation.
+
+A later RFC may aggregate these views into a human-oriented status surface.
 
 ## FastMCP and CLI projection
 
-FastMCP is not merely an alternate transport for a separately designed CLI. For operations that map naturally to tools, the FastMCP tool schema is the canonical public schema.
+For tool-shaped operations, FastMCP defines the canonical typed public schema.
 
-The projected CLI must preserve:
+The CLI projection must preserve operation name, parameter names/types, optionality/defaults, structural named arguments, result semantics, and expected error states.
 
-- operation name;
-- parameter names and types;
-- optionality and defaults;
-- named-vs-positional intent;
-- descriptions/help semantics where supported;
-- result semantics and error conditions.
+Machine-readable operation output is canonical. Human-readable CLI presentation, including optional command hints or JSON/text formatting, may evolve independently as long as semantics remain identical.
 
-A handwritten Cyclopts command is acceptable only as a thin presentation adapter when generated/projection behavior cannot deliver the intended terminal UX. It must call the same canonical operation and should be covered by parity tests.
-
-The architecture should therefore be:
+The target architecture is:
 
 ```text
 Wisk runtime/domain behavior
@@ -258,124 +288,101 @@ canonical typed FastMCP operations
 MCP transport + CLI projection/thin terminal adapters
 ```
 
-and not:
-
-```text
-Wisk runtime
-   ↑        ↑
-CLI API   MCP API
-```
-
-where each surface independently specifies the operation.
-
-The current duplicated `wisk start` / `wisk_start` and `session start-next` / `wisk_start_next_session` surfaces should converge during implementation of this RFC.
+not independently specified CLI and MCP APIs.
 
 ## Lifecycle
 
-Bootstrap, execution, and managed-bundle upgrade are separate operations:
-
 ```bash
 wisk init       # first adoption
-wisk start      # ordinary execution
+wisk start      # start or resume ordinary useful work
 wisk upgrade    # explicit managed-bundle refresh
 ```
 
 `start` must not implicitly run `init` or `upgrade`.
 
+A distinct `continue` command is not required for the golden path: resumability belongs to `start` plus persisted state. A future convenience command may expose active-run inspection without becoming a second orchestration primitive.
+
+Session finalization (`finish`) is intentionally outside this RFC because transactional outcome/Experience/Handoff policy deserves a separate lifecycle design.
+
 ## Compatibility and migration
 
-This RFC changes an existing `wisk start` signature rather than adding a wholly new entrypoint, and it changes the ownership model of the CLI/MCP definitions.
+Implementation should:
 
-Migration should therefore be explicit:
-
-- make task optional in the canonical start operation;
-- make repository arguments default to the current directory where appropriate;
-- move positional RunSpec selection to `--run-spec` / the equivalent named MCP field;
-- move positional SessionType selection to `--session-type` / the equivalent named MCP field;
-- preserve the old positional `start <task> [run_spec] [session_type]` form for a deprecation window when it can be parsed unambiguously, with a clear warning;
-- retain `wisk session start-next <task>` and `wisk_start_next_session` as compatibility aliases with deprecation notices;
-- migrate duplicated Cyclopts/FastMCP operation definitions toward canonical FastMCP tools plus CLI projection/thin adapters;
-- update README and consumer guidance to use `wisk init` once and `wisk start` thereafter;
-- retain the supersession note in RFC 0005's golden-path and explicit-start sections.
-
-A later release may remove deprecated positional structural arguments, `session start-next`, and redundant handwritten CLI adapters where the generated/projected CLI is sufficient.
+- make task optional in canonical start;
+- default repository arguments appropriately for initialized consumers;
+- move positional RunSpec selection to `--run-spec` / named MCP field;
+- move positional SessionType selection to `--session-type` / named MCP field;
+- preserve unambiguous legacy positional forms for a deprecation window with warnings;
+- retain `session start-next` and `wisk_start_next_session` as compatibility aliases during deprecation;
+- converge duplicated Cyclopts/FastMCP definitions toward canonical FastMCP tools plus projection/thin adapters;
+- promote `check_run`'s next typed action into the stable operation envelope;
+- treat expected blockers as typed domain returns rather than generic exceptions;
+- make `start` resume compatible persisted live runs before creating duplicates;
+- keep RFC 0005's supersession annotations current.
 
 ## Consumer integration
 
-A consumer that installs Wisk in its project environment should be able to reduce a recurring agent loop to the environment-specific launcher plus `wisk start`.
-
-For example, with uv:
+A consumer installing Wisk in its project environment should reduce a recurring loop to:
 
 ```bash
 uv run wisk start
 ```
 
-The consumer should not need another prompt saying to inspect issues, choose a SessionType, run checks, synthesize knowledge, or evolve skills when those behaviors are represented by Wisk contracts and policy.
+The scheduler can safely issue that command again after a process restart or on its next cadence tick. Persisted OKF state determines whether Wisk resumes existing work, reports a blocker, or creates a new run.
 
-Domain-specific requirements still belong in consumer-owned SessionTypes, RunSpecs, context policies, and knowledge. Zero-prompt removes duplicated orchestration, not domain specialization.
-
-## Output contract
-
-The canonical start operation should return enough structured information for an agent or projected CLI to act without reconstructing orchestration from documentation. At minimum:
-
-- selected SessionType;
-- `selection_reason` (`cadence`, `on-demand-fallback`, `explicit-override`, `handoff-continuation`, or equivalent stable vocabulary);
-- resolved RunSpec;
-- run artifact/reference;
-- effective task/intention;
-- human-facing run title;
-- resumed handoff reference when applicable;
-- blockers when an explicit override is rejected;
-- actionable next contract requirement or execution guidance.
-
-Machine-readable operation output is canonical. Human-readable CLI presentation may evolve independently as long as it does not change operation semantics.
+The consumer should not reproduce Wisk's orchestration algorithm in prompts. Domain-specific requirements remain consumer-owned SessionTypes, RunSpecs, context policies, and knowledge.
 
 ## Non-goals
 
 This RFC does not:
 
-- remove SessionTypes, RunSpecs, context policies, or cadence;
-- make all repositories use identical domain policy;
-- remove low-level run-state operations;
+- remove SessionTypes, RunSpecs, context policies, cadence, or low-level run-state operations;
 - allow explicit override to bypass hard blockers;
-- require `start` to perform arbitrary autonomous shell or GitHub actions itself;
-- make `init` or `upgrade` implicit mutations of `start`;
-- reopen old LoopRuns when continuing a handoff;
-- overload `on_demand` to mean explicit user override;
-- require every possible terminal interaction to be generated from FastMCP when a thin terminal-specific adapter is demonstrably better.
+- make `init` or `upgrade` implicit;
+- require `start` to perform arbitrary autonomous shell/GitHub actions;
+- archive handoffs at start;
+- reopen historical LoopRuns when consuming a handoff;
+- define transactional session finalization (`finish`);
+- define a consolidated human `status` UI;
+- require a separate `continue` command;
+- require every terminal interaction to be generated from FastMCP when a thin parity-tested terminal adapter is demonstrably better.
 
 ## Acceptance criteria
 
-The RFC is implemented when all of the following are true:
+The RFC is implemented when:
 
 1. `wisk init` initializes the current repository without requiring `.`.
-2. `wisk start` works with no task argument.
-3. no-task execution uses Wisk's standard useful-work intent without deriving every run title from that literal string.
+2. `wisk start` works with no task.
+3. no-task execution uses Wisk's standard useful-work intent without deriving every run title from its literal text.
 4. `wisk start "task"` supports an explicit task.
-5. `wisk start --session-type <type>` bypasses eligibility reasons, records `explicit-override`, and still honors blockers.
-6. `wisk start --run-spec <id>` pins RunSpec explicitly.
-7. ordinary selection remains driven by eligibility, cadence, and priority when no override is supplied.
-8. compatible handoff continuation creates a fresh run, records the handoff reference, and does not archive the handoff until successful outcome.
-9. multiple zero-prompt handoffs are selected deterministically.
-10. an uninitialized consumer repository fails clearly instead of falling through to dogfood layout.
-11. FastMCP exposes the canonical typed start operation with optional task and named structural overrides.
-12. the CLI is generated/projected from that canonical operation where practical, or uses only a thin parity-tested adapter where terminal-specific UX requires it.
-13. CLI and MCP expose identical start semantics, defaults, errors, and output meaning.
-14. `session start-next` and `wisk_start_next_session` are no longer presented as the golden path.
-15. RFC 0005 explicitly points to RFC 0006 for the canonical entrypoint and explicit-start semantics.
-16. bootstrap, normal execution, and upgrade are documented as distinct lifecycle operations.
-17. tests cover default start, explicit task, SessionType override reasons/blockers, RunSpec override, handoff continuation, uninitialized repositories, generated/projected CLI parity, MCP parity, selection behavior, and compatibility behavior.
+5. `--session-type` bypasses eligibility reasons, records `explicit-override`, and honors hard blockers.
+6. `--run-spec` pins RunSpec explicitly.
+7. ordinary fresh-run selection remains driven by eligibility, cadence, priority, and handoff policy.
+8. `start` detects and resumes a compatible persisted `scaffold`/`active` LoopRun instead of creating an indistinguishable duplicate when policy does not permit/justify another.
+9. `max_parallel` participates in the resume-vs-create decision.
+10. process restart does not change the derived next actionable state for unchanged persisted OKF state and explicit inputs.
+11. compatible handoff continuation creates a fresh consumer run, records the handoff, and leaves it active until successful outcome.
+12. repeated `start` after handoff-run creation resumes that live consumer run rather than creating another.
+13. multiple zero-prompt handoffs are selected deterministically.
+14. uninitialized consumer repositories fail clearly rather than falling through to dogfood layout.
+15. every state-changing operation returns one canonical envelope with `state` and either `next`, blockers/remediation, or terminal state.
+16. expected cadence/eligibility/resource blocking is represented as `state: blocked`, not generic exceptions.
+17. `next` is derivable solely from persisted OKF state plus explicit operation inputs.
+18. FastMCP exposes the canonical typed start operation and the CLI projects/adapts it without semantic drift.
+19. `session start-next` / `wisk_start_next_session` are no longer presented as the golden path.
+20. RFC 0005 points to RFC 0006 for canonical entrypoint and explicit-start semantics.
+21. tests cover zero-prompt start, explicit task, overrides, reasons/blockers, RunSpec pinning, live-run resume, process-restart recovery, max_parallel, handoff continuation, uninitialized repositories, envelope stability, MCP/CLI parity, and compatibility behavior.
 
 ## Consequence
 
-The important architectural change is not the shorter command. It is ownership.
+The architectural change is not merely a shorter command. It is ownership of execution state.
 
-A consumer should describe what is special about its work. Wisk should describe how Wisk operates. Wisk should also define each public operation once rather than separately for humans and agents.
+A consumer describes what is special about its work. Wisk owns how Wisk operates, persists enough state to reconstruct what happens next, and exposes each public operation once.
 
-Once the repository has encoded its domain-specific contracts, the recurring instruction should collapse to:
+After adoption, the recurring instruction collapses to:
 
 ```bash
 wisk start
 ```
 
-That is the zero-prompt golden path.
+Whether that call begins new work or resumes interrupted work is determined by persisted, auditable Wisk state. That is the zero-prompt golden path.
