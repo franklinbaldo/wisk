@@ -50,6 +50,27 @@ def test_explicit_session_type_override_starts_without_cadence_reason(tmp_path: 
     assert result["selection_reason"] == "explicit-override"
 
 
+def test_explicit_run_spec_does_not_resume_incompatible_live_run(tmp_path: Path) -> None:
+    knowledge = _initialized_bundle(tmp_path)
+    ws = Wisk.open(knowledge)
+
+    first = ws.start(
+        "same task",
+        session_type="session-types/standard-experience",
+        run_spec="run-specs/experience",
+    )
+    second = Wisk.open(knowledge).start(
+        "same task",
+        session_type="session-types/standard-experience",
+        run_spec="run-specs/wiki",
+    )
+
+    assert first["run_spec"] == "run-specs/experience"
+    assert second["run_spec"] == "run-specs/wiki"
+    assert second["run"] != first["run"]
+    assert second["resumed"] is False
+
+
 def test_untargeted_handoff_is_selected_as_handoff_continuation(tmp_path: Path) -> None:
     knowledge = _initialized_bundle(tmp_path)
     handoff_path = knowledge / "local" / "handoffs" / "untargeted.md"
