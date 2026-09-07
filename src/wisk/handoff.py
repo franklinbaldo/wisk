@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import hashlib
 import re
-import subprocess
+import shutil
+import subprocess  # nosec B404 -- Git is invoked without a shell using a resolved executable.
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -408,12 +409,24 @@ class HandoffWisk(BaseWisk):
                 "repository_diff_digest": "",
             }
 
+        git_binary = shutil.which("git")
+        if git_binary is None:
+            return {
+                "repository_head": "",
+                "repository_branch": "",
+                "repository_dirty": False,
+                "repository_diff_digest": "",
+            }
+
         def git(*args: str) -> str:
-            result = subprocess.run(
-                ["git", "-C", str(repo), *args],
+            # The executable is resolved once, shell=False is explicit, and every option is
+            # chosen by Wisk. The repository path is passed as one argv element, never a shell.
+            result = subprocess.run(  # nosec B603
+                [git_binary, "-C", str(repo), *args],
                 check=False,
                 capture_output=True,
                 text=True,
+                shell=False,
             )
             return result.stdout.strip() if result.returncode == 0 else ""
 
