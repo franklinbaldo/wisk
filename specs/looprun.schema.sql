@@ -9,6 +9,7 @@ CREATE TABLE "LoopRun" (
     "run_spec_snapshot" VARCHAR,
     "session_type" VARCHAR,
     "task" VARCHAR,
+    "resumed_handoff" VARCHAR,
     "readings" VARCHAR[],
     "goals" VARCHAR[],
     "decisions" VARCHAR[],
