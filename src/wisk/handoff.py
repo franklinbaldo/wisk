@@ -19,6 +19,7 @@ _HANDOFF_STATUS_ARCHIVED = "archived"
 _TERMINAL_GOAL_STATUSES = frozenset({"achieved", "carried_forward"})
 _HANDOFF_ENVIRONMENT_CHECK = "handoff-environment"
 _HANDOFF_DISPOSITION_CHECK = "handoff-disposition"
+_HANDOFF_DISPOSITIONS = frozenset({"accepted", "reframed", "rejected"})
 
 
 class HandoffWisk(BaseWisk):
@@ -247,6 +248,14 @@ class HandoffWisk(BaseWisk):
         lifecycle_requirements: list[dict[str, Any]] = []
         resumed_handoff = str(run_fm.get("resumed_handoff") or "")
         if resumed_handoff:
+            resumed_record = self._find_record("Handoff", resumed_handoff)
+            resumed_fm = resumed_record["frontmatter"]
+            baseline = {
+                "repository_head": str(resumed_fm.get("repository_head") or ""),
+                "repository_branch": str(resumed_fm.get("repository_branch") or ""),
+                "repository_dirty": bool(resumed_fm.get("repository_dirty")),
+                "repository_diff_digest": str(resumed_fm.get("repository_diff_digest") or ""),
+            }
             checks = self._run_components("RunCheck", run_id)
             by_kind = {
                 str(item["frontmatter"].get("kind") or ""): item["frontmatter"]
@@ -259,6 +268,7 @@ class HandoffWisk(BaseWisk):
                         "requirement": f"check:{_HANDOFF_ENVIRONMENT_CHECK}",
                         "kind": _HANDOFF_ENVIRONMENT_CHECK,
                         "handoff": resumed_handoff,
+                        "baseline": baseline,
                         "message": (
                             "Revalidate and document repository/environment state against the "
                             "handoff baseline before relying on prior continuation instructions."
@@ -271,33 +281,47 @@ class HandoffWisk(BaseWisk):
                         "requirement": f"check:{_HANDOFF_ENVIRONMENT_CHECK}:resolved",
                         "kind": _HANDOFF_ENVIRONMENT_CHECK,
                         "handoff": resumed_handoff,
+                        "baseline": baseline,
                         "observed": str(environment.get("status") or ""),
-                        "message": "Resolve repository/environment drift before continuing the handoff.",
+                        "message": (
+                            "Resolve repository/environment drift before continuing the handoff."
+                        ),
                     }
                 )
 
             disposition = by_kind.get(_HANDOFF_DISPOSITION_CHECK)
+            disposition_value = self._disposition_value(disposition)
+            disposition_evidence = str((disposition or {}).get("evidence") or "").strip()
+            disposition_invalid = disposition is not None and (
+                str(disposition.get("status") or "") != "pass"
+                or disposition_value not in _HANDOFF_DISPOSITIONS
+                or (disposition_value in {"reframed", "rejected"} and not disposition_evidence)
+            )
             if disposition is None:
                 lifecycle_requirements.append(
                     {
                         "requirement": f"check:{_HANDOFF_DISPOSITION_CHECK}",
                         "kind": _HANDOFF_DISPOSITION_CHECK,
                         "handoff": resumed_handoff,
-                        "expected": ["accepted", "reframed", "rejected"],
+                        "expected": sorted(_HANDOFF_DISPOSITIONS),
                         "message": (
                             "Evaluate the transferred handoff goals and document whether they are "
                             "accepted, reframed, or rejected with rationale/evidence."
                         ),
                     }
                 )
-            elif str(disposition.get("status") or "") != "pass":
+            elif disposition_invalid:
                 lifecycle_requirements.append(
                     {
                         "requirement": f"check:{_HANDOFF_DISPOSITION_CHECK}:resolved",
                         "kind": _HANDOFF_DISPOSITION_CHECK,
                         "handoff": resumed_handoff,
-                        "observed": str(disposition.get("status") or ""),
-                        "message": "Resolve the handoff disposition before continuing or closing.",
+                        "expected": sorted(_HANDOFF_DISPOSITIONS),
+                        "observed": disposition_value or str(disposition.get("status") or ""),
+                        "message": (
+                            "Record a passing handoff disposition as accepted, reframed, or rejected; "
+                            "reframed/rejected dispositions require evidence."
+                        ),
                     }
                 )
 
@@ -367,6 +391,13 @@ class HandoffWisk(BaseWisk):
         result["active_handoffs_created"] = len(active_for_run)
         result["handoffs_created"] = len(handoffs_for_run)
         return result
+
+    @staticmethod
+    def _disposition_value(disposition: dict[str, Any] | None) -> str:
+        if disposition is None:
+            return ""
+        result = str(disposition.get("result") or "").strip().lower()
+        return result.split(":", 1)[0].split(None, 1)[0] if result else ""
 
     def _repository_baseline(self) -> dict[str, Any]:
         repo = self._repository_root()
