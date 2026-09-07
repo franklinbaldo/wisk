@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "wikiskill"
+name = "wisk"
 dynamic = ["version"]
 description = "Contract-guided agent execution and persistent learning runtime built on OKF."
 readme = "README.md"
@@ -25,11 +25,13 @@ dependencies = [
 ]
 
 [project.scripts]
+wisk = "wikiskill.cli:app"
+# Temporary compatibility alias for existing consumers.
 wikiskill = "wikiskill.cli:app"
 
 [project.urls]
-Homepage = "https://github.com/franklinbaldo/wikiskill"
-Repository = "https://github.com/franklinbaldo/wikiskill"
+Homepage = "https://github.com/franklinbaldo/wisk"
+Repository = "https://github.com/franklinbaldo/wisk"
 
 [dependency-groups]
 dev = [
@@ -49,11 +51,11 @@ allow-direct-references = true
 path = "src/wikiskill/__init__.py"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/wikiskill"]
+packages = ["src/wisk", "src/wikiskill"]
 
 # Consumer bootstrap must work from an installed wheel, not only from this Git checkout.
 # These force-includes single-source the normative contracts and canonical learning roles
-# that are also used by WikiSkill's own dogfood bundle.
+# that are also used by Wisk's own dogfood bundle.
 [tool.hatch.build.targets.wheel.force-include]
 "specs" = "wikiskill/_assets/specs"
 "knowledge/skills/session-types/experience.md" = "wikiskill/_assets/canonical/session-types/experience.md"
@@ -75,7 +77,7 @@ exclude_dirs = ["tests", ".venv"]
 skips = ["B101"]
 
 [tool.vulture]
-paths = ["src/wikiskill"]
+paths = ["src/wikiskill", "src/wisk"]
 min_confidence = 80
 
 [tool.pytest.ini_options]
