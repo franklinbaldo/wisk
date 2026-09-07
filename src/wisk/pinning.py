@@ -11,7 +11,9 @@ from okf_parser import load_bundle
 
 from wisk.cadence import CadenceWisk
 
-_LIFECYCLE_CHECK_KINDS = frozenset({"handoff", "goal-state"})
+_LIFECYCLE_CHECK_KINDS = frozenset(
+    {"handoff", "goal-state", "handoff-environment", "handoff-disposition"}
+)
 
 
 class PinnedWisk(CadenceWisk):
