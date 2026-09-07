@@ -2,7 +2,7 @@
 
 > **Contract-guided agent execution and persistent learning on OKF.**
 
-`wisk` is an experimental agent runtime inspired by Google Research's **"Wisk: Compiling Agent Experience into Persistent Knowledge for Skill Evolution" (2026)**.
+`wisk` is an experimental agent runtime inspired by Google Research's 2026 work on compiling agent experience into persistent knowledge for skill evolution.
 
 It uses [Open Knowledge Format (OKF)](https://github.com/franklinbaldo/okf-parser) to represent live execution state and persistent learning as an auditable typed knowledge graph.
 
@@ -127,15 +127,11 @@ wisk handoff list|create|continue ...
 wisk serve
 ```
 
-
 ## Python API
-
-New code should import `wisk`:
 
 ```python
 from wisk import Wisk
 ```
-
 
 ## Architecture boundary
 
@@ -173,7 +169,6 @@ cd wisk
 uv sync
 uv run wisk info
 ```
-
 
 ## License
 
