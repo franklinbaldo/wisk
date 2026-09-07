@@ -107,7 +107,9 @@ def start(
         run_spec = legacy_run_spec
     if legacy_session_type is not None:
         if session_type is not None:
-            raise ValueError("SessionType was provided both positionally and through --session-type.")
+            raise ValueError(
+                "SessionType was provided both positionally and through --session-type."
+            )
         session_type = legacy_session_type
     if legacy_run_spec is not None or legacy_session_type is not None:
         print(
