@@ -11,21 +11,29 @@ It uses [Open Knowledge Format (OKF)](https://github.com/franklinbaldo/okf-parse
 Wisk is intended to be adopted by an existing repository, not reconstructed from a long prompt.
 
 ```bash
-uvx wisk init .
-wisk session start-next "Do the best useful work available in this repository"
+uvx wisk init
+wisk start
 ```
 
-`wisk init` creates a managed `.wisk/` bundle containing compatible normative contracts, canonical learning roles, and the standard consumer profile.
+`wisk init` creates a managed `.wisk/` bundle containing compatible normative contracts, canonical learning roles, and the standard consumer profile. It is a one-time adoption step; ordinary scheduled or interactive work thereafter enters through `wisk start`.
 
-Managed runtime files can be refreshed with:
+`wisk start` needs no task. It resumes compatible live work when present; otherwise it selects the best eligible SessionType and returns the next typed contract action. Optional task, SessionType, and RunSpec constraints remain available:
 
 ```bash
-wisk upgrade .
+wisk start "Improve CLI ergonomics"
+wisk start --session-type wiki
+wisk start --run-spec local-review
+```
+
+Managed runtime files can be refreshed explicitly with:
+
+```bash
+wisk upgrade
 ```
 
 Upgrade checks hashes before writing. If a Wisk-managed file was edited locally, the command reports a conflict and leaves the installation untouched. Consumer-owned files and runtime knowledge are never overwritten by managed upgrade.
 
-See [RFC 0005](docs/rfc/0005-consumer-golden-path.md).
+See [RFC 0006](docs/rfc/0006-zero-prompt-golden-path.md) and [RFC 0005](docs/rfc/0005-consumer-golden-path.md).
 
 ## What Wisk does
 
@@ -67,7 +75,7 @@ See [RFC 0004](docs/rfc/0004-canonical-learning-cycle.md).
 
 `wisk init` installs an opinionated but replaceable standard profile.
 
-- **Experience** is ordinary useful work and is the on-demand fallback for an explicit `session start-next` call.
+- **Experience** is ordinary useful work and is the on-demand fallback for `wisk start` when no higher-priority synthesis or skill evolution is due.
 - **Wiki** becomes eligible after three new Experiences and has higher priority than ordinary Experience.
 - **Skill** becomes eligible after six new Experiences. Wiki has higher priority, so synthesis runs before skill evolution when both are due.
 
@@ -86,8 +94,8 @@ Those thresholds are product defaults, not universal laws. Consumers can special
 The run artifact is not a report written after the work. It exists before substantive execution begins.
 
 ```text
-create scaffold
-→ validate with okf-parser
+wisk start
+→ validate persisted state
 → inspect the next unsatisfied requirement
 → perform the next useful action
 → record typed state and evidence
@@ -115,12 +123,12 @@ Important entry points include:
 
 ```text
 wisk init [repository]
+wisk start [task] [--session-type ...] [--run-spec ...]
 wisk upgrade [repository]
+wisk check <run>
 wisk context <task>
 wisk session next
-wisk session start-next <task>
-wisk start <task> [--session-type ...]
-wisk check <run>
+wisk session start-next <task>   # compatibility alias
 wisk run reading|goal|decision|evidence|check|outcome ...
 wisk experience preview|record ...
 wisk handoff list|create|continue ...

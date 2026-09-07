@@ -3,13 +3,15 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
+import sys
 from typing import Any
 
 import cyclopts
 
-from wisk import Wisk, __version__
+from wisk import __version__
 from wisk.bootstrap import DEFAULT_PROFILE, init_repository, upgrade_repository
+from wisk.operations import runtime as _runtime
+from wisk.operations import start as start_operation
 
 app = cyclopts.App(
     name="wisk",
@@ -34,16 +36,8 @@ def _print_json(result: Any) -> None:
     print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
 
 
-def _resolve_path(path: str | None) -> str:
-    """Resolve explicit path or discover a managed consumer bundle from cwd."""
-    if path:
-        return path
-    managed = Path(".wisk") / "knowledge"
-    return str(managed if managed.is_dir() else Path("knowledge"))
-
-
-def _wiki(path: str | None) -> Wisk:
-    return Wisk.open(_resolve_path(path))
+def _wiki(path: str | None):
+    return _runtime(path)
 
 
 @app.command
@@ -98,14 +92,38 @@ def context(
 
 @app.command
 def start(
-    task: str,
+    task: str | None = None,
+    legacy_run_spec: str | None = None,
+    legacy_session_type: str | None = None,
+    *,
     run_spec: str | None = None,
     session_type: str | None = None,
-    *,
     path: str | None = None,
 ) -> None:
-    """Create a live LoopRun scaffold for a task and SessionType."""
-    _print_json(_wiki(path).start_run(task, run_spec, session_type))
+    """Start or resume the best useful Wisk session."""
+    if legacy_run_spec is not None:
+        if run_spec is not None:
+            raise ValueError("RunSpec was provided both positionally and through --run-spec.")
+        run_spec = legacy_run_spec
+    if legacy_session_type is not None:
+        if session_type is not None:
+            raise ValueError("SessionType was provided both positionally and through --session-type.")
+        session_type = legacy_session_type
+    if legacy_run_spec is not None or legacy_session_type is not None:
+        print(
+            "Deprecated: positional RunSpec/SessionType overrides will be removed; "
+            "use --run-spec and --session-type.",
+            file=sys.stderr,
+        )
+
+    _print_json(
+        start_operation(
+            task,
+            run_spec=run_spec,
+            session_type=session_type,
+            path=path,
+        )
+    )
 
 
 @app.command
@@ -122,8 +140,8 @@ def session_next(*, path: str | None = None) -> None:
 
 @session_app.command(name="start-next")
 def session_start_next(task: str, *, path: str | None = None) -> None:
-    """Start the best eligible session for an explicit request to do useful work."""
-    _print_json(_wiki(path).start_next_session(task))
+    """Compatibility alias for the pre-RFC 0006 start-next entrypoint."""
+    _print_json(start_operation(task, path=path))
 
 
 @run_app.command(name="reading")
@@ -346,7 +364,7 @@ def handoff_continue(
     *,
     path: str | None = None,
 ) -> None:
-    """Archive a handoff with provenance to the later LoopRun that resumed it."""
+    """Archive a handoff with provenance to the later LoopRun that resolved it."""
     _print_json(
         _wiki(path).continue_handoff(
             handoff=handoff,

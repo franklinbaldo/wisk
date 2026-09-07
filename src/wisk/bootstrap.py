@@ -214,7 +214,7 @@ def init_repository(
         "managed_files": len(assets),
         "preserved_files": len(unmanaged),
         "conformant": True,
-        "next": ('wisk session start-next "Faça o melhor avanço possível neste repositório"'),
+        "next": "wisk start",
     }
 
 
