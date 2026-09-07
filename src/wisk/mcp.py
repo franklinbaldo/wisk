@@ -93,7 +93,8 @@ def wisk_start_legacy(
 @mcp.tool(
     name="wisk_check",
     description=(
-        "Validate a live LoopRun and return unmet RunSpec/lifecycle requirements plus the next action."
+        "Validate a live LoopRun and return unmet RunSpec/lifecycle requirements "
+        "plus the next action."
     ),
     annotations={"readOnlyHint": True},
 )
