@@ -319,8 +319,8 @@ class HandoffWisk(BaseWisk):
                         "expected": sorted(_HANDOFF_DISPOSITIONS),
                         "observed": disposition_value or str(disposition.get("status") or ""),
                         "message": (
-                            "Record a passing handoff disposition as accepted, reframed, or rejected; "
-                            "reframed/rejected dispositions require evidence."
+                            "Record a passing handoff disposition as accepted, reframed, "
+                            "or rejected; reframed/rejected dispositions require evidence."
                         ),
                     }
                 )
