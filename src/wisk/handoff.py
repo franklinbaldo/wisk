@@ -258,8 +258,7 @@ class HandoffWisk(BaseWisk):
             }
             checks = self._run_components("RunCheck", run_id)
             by_kind = {
-                str(item["frontmatter"].get("kind") or ""): item["frontmatter"]
-                for item in checks
+                str(item["frontmatter"].get("kind") or ""): item["frontmatter"] for item in checks
             }
             environment = by_kind.get(_HANDOFF_ENVIRONMENT_CHECK)
             if environment is None:
