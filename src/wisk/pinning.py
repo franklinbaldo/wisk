@@ -129,10 +129,10 @@ class PinnedWisk(CadenceWisk):
             "checks": self._run_components("RunCheck", run_id),
             "outcomes": self._run_components("RunOutcome", run_id),
         }
-        unsatisfied = self._pinned_unsatisfied(pinned, components)
-        unsatisfied.extend(
+        lifecycle = [
             item for item in base["unsatisfied"] if item.get("kind") in _LIFECYCLE_CHECK_KINDS
-        )
+        ]
+        unsatisfied = [*lifecycle, *self._pinned_unsatisfied(pinned, components)]
         structural = base["structural"]
         conformant = bool(structural["conformant"]) and not unsatisfied
 
