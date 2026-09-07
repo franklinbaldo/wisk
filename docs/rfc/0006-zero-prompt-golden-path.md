@@ -54,15 +54,44 @@ Three pieces are unnecessary in the normal case:
 
 The current CLI also already exposes `wisk start` with positional task, RunSpec, and SessionType arguments. Therefore this RFC is not adding a new command: it is deliberately reshaping an existing public interface. The migration must remove positional ambiguity rather than preserve it accidentally.
 
-## Design principle
+There is a second source of duplication today: Wisk separately defines Cyclopts commands and FastMCP tools for the same operations. That duplicates signatures, defaults, descriptions, and potentially behavior. Since FastMCP tools already provide a typed operation schema that can serve agent and command-line callers, the public operation should be defined once and projected into the CLI whenever practical.
+
+## Design principles
 
 **Defaults encode policy; arguments encode exceptions.**
 
-A useful test for the public CLI is:
+**Define operations once.** A Wisk operation should have one canonical typed definition. CLI and MCP are transport/presentation surfaces, not separate behavioral APIs.
+
+A useful test for the public interface is:
 
 > After `wisk init`, can an unattended scheduler invoke only `wisk start` indefinitely without maintaining a second orchestration prompt?
 
 The answer should be yes.
+
+## Canonical operation surface
+
+FastMCP tools are the canonical typed public operation definitions for Wisk operations that naturally map to MCP tools.
+
+A canonical start operation is conceptually:
+
+```python
+@mcp.tool(name="start")
+def start(
+    task: str | None = None,
+    *,
+    session_type: str | None = None,
+    run_spec: str | None = None,
+) -> StartResult:
+    ...
+```
+
+The precise implementation may delegate immediately into the Wisk runtime/domain layer, but there must not be a second independently specified CLI signature with different defaults or semantics.
+
+The CLI should be generated or projected from the canonical FastMCP tool schema when FastMCP can express the intended terminal UX faithfully. Wisk may keep a thin handwritten CLI adapter only where terminal-specific interaction materially improves usability and cannot be represented cleanly by the tool schema. Such an adapter must delegate to the same canonical operation and must not redefine behavior.
+
+Cyclopts therefore remains an implementation detail available for CLI projection and exceptional terminal UX, not a second source of truth for the API.
+
+This rule applies progressively to other duplicated Wisk operations, not only `start`.
 
 ## Proposed interface
 
@@ -119,6 +148,8 @@ wisk start "Review current knowledge" --session-type wiki --run-spec local-revie
 
 This removes the current positional ambiguity between free-form task text and structural identifiers.
 
+The equivalent MCP call exposes the same fields with the same defaults. No translation layer may silently reinterpret them.
+
 ## SessionType override semantics
 
 `--session-type X` is an explicit override.
@@ -150,6 +181,8 @@ The distinction is intentional:
 - `wisk session next` exposes scheduler state for inspection/debugging.
 
 The golden path should not require the caller to turn the result of `next` into a separate `start-next` operation.
+
+Whether `session next` itself remains handwritten CLI, becomes a projected tool, or is renamed later is outside this RFC. Its behavior must still come from one canonical operation.
 
 ## Handoffs
 
@@ -187,7 +220,7 @@ Dogfood/development layout resolution may remain available only when the runtime
 
 Zero-prompt does not mean zero contract. It means moving orchestration knowledge to the component that owns it.
 
-`wisk start` should progressively own the normal-case decisions for:
+The underlying start operation should progressively own the normal-case decisions for:
 
 - SessionType eligibility, cadence, priority, and explicit pinning;
 - compatible handoff continuation;
@@ -198,21 +231,44 @@ Zero-prompt does not mean zero contract. It means moving orchestration knowledge
 - validation after state transitions;
 - actionable guidance about readings, evidence, checks, and completion.
 
-Low-level commands such as `run reading`, `run goal`, `run decision`, `run evidence`, `run check`, and `run outcome` remain valuable primitives and debugging/automation interfaces. Their existence should not require consumer prompts to reproduce Wisk's execution algorithm.
+Low-level operations such as run reading, goal, decision, evidence, check, and outcome remain valuable primitives and debugging/automation interfaces. Their existence should not require consumer prompts to reproduce Wisk's execution algorithm.
 
-## CLI and MCP parity
+## FastMCP and CLI projection
 
-Zero-prompt is a runtime contract, not merely CLI sugar.
+FastMCP is not merely an alternate transport for a separately designed CLI. For operations that map naturally to tools, the FastMCP tool schema is the canonical public schema.
 
-The MCP surface must support the same semantics as the CLI:
+The projected CLI must preserve:
 
-- task is optional;
-- ordinary execution uses the same internal default intent;
-- SessionType override has the same reasons-vs-blockers semantics;
-- RunSpec may be pinned explicitly without positional ambiguity;
-- returned metadata exposes selection reason, resolved RunSpec, handoff continuation, and actionable next state.
+- operation name;
+- parameter names and types;
+- optionality and defaults;
+- named-vs-positional intent;
+- descriptions/help semantics where supported;
+- result semantics and error conditions.
 
-The existing MCP `start-next` style operation should migrate alongside the CLI so the two surfaces do not encode different orchestration models.
+A handwritten Cyclopts command is acceptable only as a thin presentation adapter when generated/projection behavior cannot deliver the intended terminal UX. It must call the same canonical operation and should be covered by parity tests.
+
+The architecture should therefore be:
+
+```text
+Wisk runtime/domain behavior
+          ↑
+canonical typed FastMCP operations
+          ↑
+MCP transport + CLI projection/thin terminal adapters
+```
+
+and not:
+
+```text
+Wisk runtime
+   ↑        ↑
+CLI API   MCP API
+```
+
+where each surface independently specifies the operation.
+
+The current duplicated `wisk start` / `wisk_start` and `session start-next` / `wisk_start_next_session` surfaces should converge during implementation of this RFC.
 
 ## Lifecycle
 
@@ -228,21 +284,21 @@ wisk upgrade    # explicit managed-bundle refresh
 
 ## Compatibility and migration
 
-This RFC changes an existing `wisk start` signature rather than adding a wholly new entrypoint.
+This RFC changes an existing `wisk start` signature rather than adding a wholly new entrypoint, and it changes the ownership model of the CLI/MCP definitions.
 
 Migration should therefore be explicit:
 
-- make task optional;
+- make task optional in the canonical start operation;
 - make repository arguments default to the current directory where appropriate;
-- move positional RunSpec selection to `--run-spec`;
-- move positional SessionType selection to `--session-type`;
+- move positional RunSpec selection to `--run-spec` / the equivalent named MCP field;
+- move positional SessionType selection to `--session-type` / the equivalent named MCP field;
 - preserve the old positional `start <task> [run_spec] [session_type]` form for a deprecation window when it can be parsed unambiguously, with a clear warning;
-- retain `wisk session start-next <task>` as a compatibility alias with a deprecation notice;
-- migrate the equivalent MCP operation in the same release family;
+- retain `wisk session start-next <task>` and `wisk_start_next_session` as compatibility aliases with deprecation notices;
+- migrate duplicated Cyclopts/FastMCP operation definitions toward canonical FastMCP tools plus CLI projection/thin adapters;
 - update README and consumer guidance to use `wisk init` once and `wisk start` thereafter;
-- add a supersession note to RFC 0005's golden-path section.
+- retain the supersession note in RFC 0005's golden-path and explicit-start sections.
 
-A later release may remove deprecated positional structural arguments and `session start-next`.
+A later release may remove deprecated positional structural arguments, `session start-next`, and redundant handwritten CLI adapters where the generated/projected CLI is sufficient.
 
 ## Consumer integration
 
@@ -258,9 +314,9 @@ The consumer should not need another prompt saying to inspect issues, choose a S
 
 Domain-specific requirements still belong in consumer-owned SessionTypes, RunSpecs, context policies, and knowledge. Zero-prompt removes duplicated orchestration, not domain specialization.
 
-## CLI output
+## Output contract
 
-`wisk start` should return enough structured information for an agent to act without reconstructing orchestration from documentation. At minimum:
+The canonical start operation should return enough structured information for an agent or projected CLI to act without reconstructing orchestration from documentation. At minimum:
 
 - selected SessionType;
 - `selection_reason` (`cadence`, `on-demand-fallback`, `explicit-override`, `handoff-continuation`, or equivalent stable vocabulary);
@@ -272,7 +328,7 @@ Domain-specific requirements still belong in consumer-owned SessionTypes, RunSpe
 - blockers when an explicit override is rejected;
 - actionable next contract requirement or execution guidance.
 
-Machine-readable output should remain stable enough for agent launchers while human-readable presentation can evolve independently.
+Machine-readable operation output is canonical. Human-readable CLI presentation may evolve independently as long as it does not change operation semantics.
 
 ## Non-goals
 
@@ -280,12 +336,13 @@ This RFC does not:
 
 - remove SessionTypes, RunSpecs, context policies, or cadence;
 - make all repositories use identical domain policy;
-- remove low-level run-state commands;
+- remove low-level run-state operations;
 - allow explicit override to bypass hard blockers;
 - require `start` to perform arbitrary autonomous shell or GitHub actions itself;
 - make `init` or `upgrade` implicit mutations of `start`;
 - reopen old LoopRuns when continuing a handoff;
-- overload `on_demand` to mean explicit user override.
+- overload `on_demand` to mean explicit user override;
+- require every possible terminal interaction to be generated from FastMCP when a thin terminal-specific adapter is demonstrably better.
 
 ## Acceptance criteria
 
@@ -301,17 +358,21 @@ The RFC is implemented when all of the following are true:
 8. compatible handoff continuation creates a fresh run, records the handoff reference, and does not archive the handoff until successful outcome.
 9. multiple zero-prompt handoffs are selected deterministically.
 10. an uninitialized consumer repository fails clearly instead of falling through to dogfood layout.
-11. CLI and MCP expose equivalent zero-prompt and override semantics.
-12. `session start-next` is no longer presented as the golden path.
-13. RFC 0005 explicitly points to RFC 0006 for the canonical entrypoint.
-14. bootstrap, normal execution, and upgrade are documented as distinct lifecycle operations.
-15. tests cover default start, explicit task, SessionType override reasons/blockers, RunSpec override, handoff continuation, uninitialized repositories, MCP parity, selection behavior, and compatibility behavior.
+11. FastMCP exposes the canonical typed start operation with optional task and named structural overrides.
+12. the CLI is generated/projected from that canonical operation where practical, or uses only a thin parity-tested adapter where terminal-specific UX requires it.
+13. CLI and MCP expose identical start semantics, defaults, errors, and output meaning.
+14. `session start-next` and `wisk_start_next_session` are no longer presented as the golden path.
+15. RFC 0005 explicitly points to RFC 0006 for the canonical entrypoint and explicit-start semantics.
+16. bootstrap, normal execution, and upgrade are documented as distinct lifecycle operations.
+17. tests cover default start, explicit task, SessionType override reasons/blockers, RunSpec override, handoff continuation, uninitialized repositories, generated/projected CLI parity, MCP parity, selection behavior, and compatibility behavior.
 
 ## Consequence
 
 The important architectural change is not the shorter command. It is ownership.
 
-A consumer should describe what is special about its work. Wisk should describe how Wisk operates. Once the repository has encoded its domain-specific contracts, the recurring instruction should collapse to:
+A consumer should describe what is special about its work. Wisk should describe how Wisk operates. Wisk should also define each public operation once rather than separately for humans and agents.
+
+Once the repository has encoded its domain-specific contracts, the recurring instruction should collapse to:
 
 ```bash
 wisk start
