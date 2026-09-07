@@ -71,7 +71,8 @@ class CadenceWisk(PolicyWisk):
         matching_handoffs = [
             item
             for item in self.active_handoffs()
-            if str(item.get("target_session_type") or "") in lineage
+            if not item.get("target_session_type")
+            or str(item.get("target_session_type") or "") in lineage
         ]
         threshold_value = self._metric_value(
             str(cadence.get("threshold_metric") or ""),
