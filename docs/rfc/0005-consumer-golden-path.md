@@ -6,15 +6,24 @@ created: 2026-09-06
 
 # RFC 0005 — Consumer golden path
 
+> **Superseded in part by RFC 0006.** RFC 0006 supersedes this RFC's canonical invocation and explicit-start semantics. The consumer/product boundary, managed-state model, bootstrap/upgrade ownership, standard profile, and local-specialization model below remain applicable. References to `wisk init .` plus `wisk session start-next "..."` describe the pre-RFC-0006 interface; the canonical entrypoint is now `wisk init` once and `wisk start` for ordinary execution.
+
 ## Summary
 
 Wisk should be opinionated about how a repository adopts the learning runtime while remaining neutral about the repository's domain.
 
-A consumer should not have to reproduce Wisk's internal directory layout, copy normative specs by hand, pin private implementation details, or rediscover the canonical Experience → Wiki → Skill cycle. The normal path should be:
+A consumer should not have to reproduce Wisk's internal directory layout, copy normative specs by hand, pin private implementation details, or rediscover the canonical Experience → Wiki → Skill cycle. The normal path originally proposed by this RFC was:
 
 ```bash
 wisk init .
 wisk session start-next "Faça o melhor avanço possível neste repositório"
+```
+
+RFC 0006 supersedes that operational entrypoint with:
+
+```bash
+wisk init
+wisk start
 ```
 
 The consumer owns domain specialization. Wisk owns the learning architecture, compatible contracts, bootstrap, upgrade mechanics, and a useful default scheduling profile.
@@ -30,7 +39,7 @@ The consumer owns domain specialization. Wisk owns the learning architecture, co
 - bootstrap and upgrade of Wisk-managed files;
 - the manifest that identifies managed state;
 - safe conflict detection before managed files are replaced;
-- CLI ergonomics that let an explicit `session start-next` fall back to ordinary Experience work when no higher-value maintenance session is due.
+- CLI ergonomics that let an explicit request for useful work fall back to ordinary Experience work when no higher-value maintenance session is due.
 
 ### The consumer owns
 
@@ -71,7 +80,7 @@ The standard profile makes the canonical cycle useful without requiring a schedu
 
 ### Experience
 
-Experience is normal work. It is available on explicit `start-next` invocation and has the lowest automatic priority of the three learning roles.
+Experience is normal work. It is available on explicit invocation and has the lowest automatic priority of the three learning roles.
 
 ### Wiki
 
@@ -93,15 +102,17 @@ Consumers may replace these thresholds. They are a product default, not a univer
 
 ## Explicit start semantics
 
+> **Superseded by RFC 0006.** This section documents the pre-RFC-0006 `session start-next` behavior. RFC 0006 makes `wisk start` the canonical entrypoint, makes task optional, moves structural selection to named flags, and defines explicit SessionType pinning as an override that may bypass positive eligibility reasons while continuing to honor hard blockers.
+
 `session next` remains an explanation of automatically eligible work.
 
-`session start-next` is itself an explicit request to do useful work. It considers on-demand eligibility in addition to automatic triggers. The standard profile marks only Experience as on-demand, so an invocation behaves as follows:
+Under the pre-RFC-0006 interface, `session start-next` was itself an explicit request to do useful work. It considered on-demand eligibility in addition to automatic triggers. The standard profile marks only Experience as on-demand, so an invocation behaved as follows:
 
-1. if Wiki or Skill is due, the higher-priority due session runs;
-2. otherwise Experience starts;
-3. a targeted Handoff may still make its compatible session eligible according to cadence policy.
+1. if Wiki or Skill was due, the higher-priority due session ran;
+2. otherwise Experience started;
+3. a targeted Handoff could still make its compatible session eligible according to cadence policy.
 
-This makes the short external prompt reliable without configuring an arbitrary clock interval merely to keep Experience selectable.
+This made the short external prompt reliable without configuring an arbitrary clock interval merely to keep Experience selectable. RFC 0006 preserves that product intent while moving the public golden path to `wisk start`.
 
 ## Bootstrap
 
@@ -157,7 +168,7 @@ nudges:
   - "Prefer substantive repository value over meta-work."
 ```
 
-The scheduler treats inheritance as specialization. If a parent has a child, automatic and `start-next` selection consider the leaf specialization instead of making parent and child compete by priority or lexical order. The parent remains explicitly startable by id.
+The scheduler treats inheritance as specialization. If a parent has a child, automatic and explicit selection consider the leaf specialization instead of making parent and child compete by priority or lexical order. The parent remains explicitly startable by id.
 
 A consumer that needs one extra operational requirement should not copy the parent RunSpec. `parent_spec` appends the four required component lists into the effective contract:
 
@@ -187,6 +198,6 @@ The manifest has its own `format_version`, independent of the package semantic v
 
 ## Success criterion
 
-A new repository can adopt Wisk through `init`, immediately run `session start-next`, and receive the canonical learning behavior. A real consumer such as Judicial should then be able to delete most of its hand-built Wisk bootstrap and retain only domain specialization and learned state.
+A new repository can adopt Wisk through `init`, immediately run `wisk start`, and receive the canonical learning behavior. A real consumer such as Judicial should then be able to delete most of its hand-built Wisk bootstrap and retain only domain specialization and learned state.
 
 If a consumer must understand Wisk's package topology, manually synchronize core specs, accept generated managed files as repository noise, or lose learned state when cloning the repository, this RFC has not been satisfied.
