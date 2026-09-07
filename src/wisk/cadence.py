@@ -227,11 +227,12 @@ class CadenceWisk(PolicyWisk):
                     "candidates": candidates,
                 }
             reasons = list(selected.get("reasons", []))
-            selection_reason = (
-                "handoff-continuation"
-                if "active-handoff" in reasons
-                else (reasons[0] if reasons else "cadence")
-            )
+            if "active-handoff" in reasons:
+                selection_reason = "handoff-continuation"
+            elif "explicit-request" in reasons:
+                selection_reason = "on-demand-fallback"
+            else:
+                selection_reason = reasons[0] if reasons else "cadence"
 
         result = self.start_run(
             effective_task,
@@ -310,6 +311,13 @@ class CadenceWisk(PolicyWisk):
     ) -> dict[str, Any]:
         next_action = dict(check.get("next_action") or {})
         run_id = str(check.get("run_id") or "") or None
+        session_type = check.get("session_type")
+        if run_id and not session_type:
+            try:
+                run = self._find_record("LoopRun", run_id)
+                session_type = run["frontmatter"].get("session_type")
+            except ValueError:
+                session_type = None
         if check.get("conformant") or next_action.get("kind") == "complete":
             state = "done"
             payload: dict[str, Any] = {}
@@ -327,7 +335,7 @@ class CadenceWisk(PolicyWisk):
             "state": state,
             "selection_reason": selection_reason,
             "resumed": resumed,
-            "session_type": check.get("session_type"),
+            "session_type": session_type,
             "run_spec": check.get("run_spec"),
             **payload,
         }
