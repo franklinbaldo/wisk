@@ -181,7 +181,11 @@ class CadenceWisk(PolicyWisk):
     ) -> dict[str, Any]:
         """Start or resume the golden-path LoopRun and return one stable state envelope."""
         effective_task = task.strip() if task and task.strip() else _DEFAULT_TASK
-        resumed = self._resume_candidate(task=task, session_type_id=session_type)
+        resumed = self._resume_candidate(
+            task=task,
+            session_type_id=session_type,
+            run_spec_id=run_spec,
+        )
         if resumed is not None:
             check = self.check_run(resumed["id"])
             return self._operation_envelope(
@@ -266,6 +270,7 @@ class CadenceWisk(PolicyWisk):
         *,
         task: str | None,
         session_type_id: str | None,
+        run_spec_id: str | None,
     ) -> dict[str, Any] | None:
         live = [
             run
@@ -278,6 +283,13 @@ class CadenceWisk(PolicyWisk):
                 run
                 for run in live
                 if str(run["frontmatter"].get("session_type") or "") == requested
+            ]
+        if run_spec_id:
+            requested_spec = self.effective_run_spec(run_spec_id)["id"]
+            live = [
+                run
+                for run in live
+                if str(run["frontmatter"].get("run_spec") or "") == requested_spec
             ]
         if task and task.strip():
             live = [
