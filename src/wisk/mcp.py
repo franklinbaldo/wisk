@@ -1,4 +1,4 @@
-"""FastMCP server for wikiskill."""
+"""FastMCP server for wisk."""
 
 from __future__ import annotations
 
@@ -7,9 +7,9 @@ from typing import Any
 
 from fastmcp import FastMCP
 
-from wikiskill import WikiSkill
+from wisk import Wisk
 
-mcp = FastMCP(name="wikiskill")
+mcp = FastMCP(name="wisk")
 _WRITE_ANNOTATIONS = {
     "readOnlyHint": False,
     "destructiveHint": False,
@@ -18,28 +18,28 @@ _WRITE_ANNOTATIONS = {
 }
 
 
-def _get_runtime(path: str | Path = "knowledge") -> WikiSkill:
-    return WikiSkill.open(Path(path))
+def _get_runtime(path: str | Path = "knowledge") -> Wisk:
+    return Wisk.open(Path(path))
 
 
 @mcp.tool(
-    name="wikiskill_inventory",
-    description="Get concept counts grouped by concept type in the WikiSkill OKF bundle.",
+    name="wisk_inventory",
+    description="Get concept counts grouped by concept type in the Wisk OKF bundle.",
     annotations={"readOnlyHint": True},
 )
-def wikiskill_inventory(path: str = "knowledge") -> dict[str, int]:
+def wisk_inventory(path: str = "knowledge") -> dict[str, int]:
     return _get_runtime(path).inventory()
 
 
 @mcp.tool(
-    name="wikiskill_context",
+    name="wisk_context",
     description=(
         "Retrieve task-relevant RunSpecs, active handoffs, skills, wiki knowledge, and recent "
         "experiences for contract-guided agent execution."
     ),
     annotations={"readOnlyHint": True},
 )
-def wikiskill_context(
+def wisk_context(
     task: str,
     session_type: str | None = None,
     path: str = "knowledge",
@@ -48,13 +48,13 @@ def wikiskill_context(
 
 
 @mcp.tool(
-    name="wikiskill_start",
+    name="wisk_start",
     description=(
         "Create an incomplete LoopRun scaffold using an optional SessionType and governing RunSpec."
     ),
     annotations=_WRITE_ANNOTATIONS,
 )
-def wikiskill_start(
+def wisk_start(
     task: str,
     run_spec: str | None = None,
     session_type: str | None = None,
@@ -64,22 +64,22 @@ def wikiskill_start(
 
 
 @mcp.tool(
-    name="wikiskill_check",
+    name="wisk_check",
     description=(
         "Validate a live LoopRun and return unmet RunSpec requirements plus the next action."
     ),
     annotations={"readOnlyHint": True},
 )
-def wikiskill_check(run: str, path: str = "knowledge") -> dict[str, Any]:
+def wisk_check(run: str, path: str = "knowledge") -> dict[str, Any]:
     return _get_runtime(path).check_run(run)
 
 
 @mcp.tool(
-    name="wikiskill_session_eligibility",
+    name="wisk_session_eligibility",
     description="Explain why a SessionType is or is not currently eligible to run.",
     annotations={"readOnlyHint": True},
 )
-def wikiskill_session_eligibility(
+def wisk_session_eligibility(
     session_type: str,
     requested: bool = False,
     path: str = "knowledge",
@@ -88,20 +88,20 @@ def wikiskill_session_eligibility(
 
 
 @mcp.tool(
-    name="wikiskill_next_session",
+    name="wisk_next_session",
     description="Return the highest-priority automatically eligible SessionType.",
     annotations={"readOnlyHint": True},
 )
-def wikiskill_next_session(path: str = "knowledge") -> dict[str, Any] | None:
+def wisk_next_session(path: str = "knowledge") -> dict[str, Any] | None:
     return _get_runtime(path).next_session()
 
 
 @mcp.tool(
-    name="wikiskill_start_next_session",
+    name="wisk_start_next_session",
     description="Select the highest-priority eligible SessionType and start its pinned LoopRun.",
     annotations=_WRITE_ANNOTATIONS,
 )
-def wikiskill_start_next_session(
+def wisk_start_next_session(
     task: str,
     path: str = "knowledge",
 ) -> dict[str, Any]:
@@ -109,11 +109,11 @@ def wikiskill_start_next_session(
 
 
 @mcp.tool(
-    name="wikiskill_run_reading",
+    name="wisk_run_reading",
     description="Record a typed RunReading and attach it to an existing live LoopRun.",
     annotations=_WRITE_ANNOTATIONS,
 )
-def wikiskill_run_reading(
+def wisk_run_reading(
     run: str,
     component_id: str,
     kind: str,
@@ -133,11 +133,11 @@ def wikiskill_run_reading(
 
 
 @mcp.tool(
-    name="wikiskill_run_goal",
+    name="wisk_run_goal",
     description="Record a typed RunGoal and attach it to an existing live LoopRun.",
     annotations=_WRITE_ANNOTATIONS,
 )
-def wikiskill_run_goal(
+def wisk_run_goal(
     run: str,
     component_id: str,
     kind: str,
@@ -159,11 +159,11 @@ def wikiskill_run_goal(
 
 
 @mcp.tool(
-    name="wikiskill_run_goal_status",
+    name="wisk_run_goal_status",
     description="Update an existing RunGoal to the state reached by its live LoopRun.",
     annotations=_WRITE_ANNOTATIONS,
 )
-def wikiskill_run_goal_status(
+def wisk_run_goal_status(
     run: str,
     goal: str,
     status: str,
@@ -173,11 +173,11 @@ def wikiskill_run_goal_status(
 
 
 @mcp.tool(
-    name="wikiskill_run_decision",
+    name="wisk_run_decision",
     description="Record a typed RunDecision and attach it to an existing live LoopRun.",
     annotations=_WRITE_ANNOTATIONS,
 )
-def wikiskill_run_decision(
+def wisk_run_decision(
     run: str,
     component_id: str,
     question: str,
@@ -201,11 +201,11 @@ def wikiskill_run_decision(
 
 
 @mcp.tool(
-    name="wikiskill_run_evidence",
+    name="wisk_run_evidence",
     description="Record typed RunEvidence and attach it to an existing live LoopRun.",
     annotations=_WRITE_ANNOTATIONS,
 )
-def wikiskill_run_evidence(
+def wisk_run_evidence(
     run: str,
     component_id: str,
     kind: str,
@@ -229,11 +229,11 @@ def wikiskill_run_evidence(
 
 
 @mcp.tool(
-    name="wikiskill_run_check_record",
+    name="wisk_run_check_record",
     description="Record a typed RunCheck verification and attach it to a live LoopRun.",
     annotations=_WRITE_ANNOTATIONS,
 )
-def wikiskill_run_check_record(
+def wisk_run_check_record(
     run: str,
     component_id: str,
     kind: str,
@@ -257,11 +257,11 @@ def wikiskill_run_check_record(
 
 
 @mcp.tool(
-    name="wikiskill_run_outcome",
+    name="wisk_run_outcome",
     description="Record the RunOutcome that closes a contract-ready LoopRun.",
     annotations=_WRITE_ANNOTATIONS,
 )
-def wikiskill_run_outcome(
+def wisk_run_outcome(
     run: str,
     component_id: str,
     result_state: str,
@@ -289,20 +289,20 @@ def wikiskill_run_outcome(
 
 
 @mcp.tool(
-    name="wikiskill_handoffs",
+    name="wisk_handoffs",
     description="List active cross-session handoffs, ranking task-relevant work first.",
     annotations={"readOnlyHint": True},
 )
-def wikiskill_handoffs(task: str | None = None, path: str = "knowledge") -> list[dict[str, Any]]:
+def wisk_handoffs(task: str | None = None, path: str = "knowledge") -> list[dict[str, Any]]:
     return _get_runtime(path).active_handoffs(task)
 
 
 @mcp.tool(
-    name="wikiskill_handoff_create",
+    name="wisk_handoff_create",
     description="Create a validated active Handoff for material work left by a LoopRun.",
     annotations=_WRITE_ANNOTATIONS,
 )
-def wikiskill_handoff_create(
+def wisk_handoff_create(
     handoff_id: str,
     title: str,
     created_by_run: str,
@@ -326,11 +326,11 @@ def wikiskill_handoff_create(
 
 
 @mcp.tool(
-    name="wikiskill_handoff_continue",
+    name="wisk_handoff_continue",
     description=("Archive an active Handoff and record the later LoopRun that resumed the work."),
     annotations=_WRITE_ANNOTATIONS,
 )
-def wikiskill_handoff_continue(
+def wisk_handoff_continue(
     handoff: str,
     continued_by_run: str,
     resolution: str,
@@ -344,7 +344,7 @@ def wikiskill_handoff_continue(
 
 
 @mcp.tool(
-    name="wikiskill_experience_preview",
+    name="wisk_experience_preview",
     description="Preview an OKF Experience document without writing it to the bundle.",
     annotations={
         "readOnlyHint": True,
@@ -353,7 +353,7 @@ def wikiskill_handoff_continue(
         "openWorldHint": False,
     },
 )
-def wikiskill_experience_preview(
+def wisk_experience_preview(
     experience_id: str,
     title: str,
     timestamp: str,
@@ -383,11 +383,11 @@ def wikiskill_experience_preview(
 
 
 @mcp.tool(
-    name="wikiskill_experience_record",
-    description="Write one validated OKF Experience document to the WikiSkill bundle.",
+    name="wisk_experience_record",
+    description="Write one validated OKF Experience document to the Wisk bundle.",
     annotations=_WRITE_ANNOTATIONS,
 )
-def wikiskill_experience_record(
+def wisk_experience_record(
     experience_id: str,
     title: str,
     timestamp: str,

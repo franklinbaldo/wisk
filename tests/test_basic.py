@@ -8,9 +8,9 @@ from pathlib import Path
 import pytest
 from okf_parser import load_bundle
 
-from wikiskill import WikiSkill, __version__
-from wikiskill.mcp import mcp
-from wikiskill.models import generate_pydantic_code, get_schema_contracts
+from wisk import Wisk, __version__
+from wisk.mcp import mcp
+from wisk.models import generate_pydantic_code, get_schema_contracts
 
 ROOT = Path(__file__).parent.parent
 
@@ -52,9 +52,9 @@ def test_bundle_conformance() -> None:
     assert "CadencePolicy" in concept_types
 
 
-def test_wikiskill_runtime_inventory_and_context() -> None:
+def test_wisk_runtime_inventory_and_context() -> None:
     knowledge_path = ROOT / "knowledge"
-    ws = WikiSkill.open(knowledge_path)
+    ws = Wisk.open(knowledge_path)
     inv = ws.inventory()
     assert inv["Experience"] >= 1
     assert inv["WikiEntry"] >= 1
@@ -63,11 +63,11 @@ def test_wikiskill_runtime_inventory_and_context() -> None:
     assert inv["SessionType"] >= 2
     assert inv["CadencePolicy"] >= 5
 
-    ctx = ws.context(task="wikiskill development")
-    assert ctx["task"] == "wikiskill development"
+    ctx = ws.context(task="wisk development")
+    assert ctx["task"] == "wisk development"
     assert ctx["session_type"] == "session-types/development"
     assert ctx["context_policy"]["id"] == "context-policies/development"
-    assert any(s["id"] == "run-specs/wikiskill-development" for s in ctx["run_specs"])
+    assert any(s["id"] == "run-specs/wisk-development" for s in ctx["run_specs"])
     assert "active_handoffs" in ctx
 
     bootstrap_ctx = ws.context(task="bootstrap repository setup")
@@ -78,11 +78,11 @@ def test_wikiskill_runtime_inventory_and_context() -> None:
 
 def test_run_start_is_incomplete_and_contract_guided(tmp_path: Path) -> None:
     knowledge_path = _temp_bundle(tmp_path)
-    ws = WikiSkill.open(knowledge_path)
+    ws = Wisk.open(knowledge_path)
 
     started = ws.start_run(
-        "wikiskill development",
-        "run-specs/wikiskill-development",
+        "wisk development",
+        "run-specs/wisk-development",
     )
 
     assert started["status"] == "scaffold"
@@ -110,8 +110,8 @@ def test_run_start_is_incomplete_and_contract_guided(tmp_path: Path) -> None:
 
 def test_run_check_turns_green_when_contract_is_satisfied(tmp_path: Path) -> None:
     knowledge_path = _temp_bundle(tmp_path)
-    ws = WikiSkill.open(knowledge_path)
-    started = ws.start_run("wikiskill development", "run-specs/wikiskill-development")
+    ws = Wisk.open(knowledge_path)
+    started = ws.start_run("wisk development", "run-specs/wisk-development")
     run_id = started["run_id"]
     runs = knowledge_path / "experiences" / "runs"
 
@@ -193,7 +193,7 @@ def test_run_check_turns_green_when_contract_is_satisfied(tmp_path: Path) -> Non
         },
     )
 
-    result = WikiSkill.open(knowledge_path).check_run(run_id)
+    result = Wisk.open(knowledge_path).check_run(run_id)
     assert result["structural"]["conformant"] is True
     assert result["unsatisfied"] == []
     assert result["conformant"] is True
@@ -208,15 +208,15 @@ def test_fastmcp_tools_registered() -> None:
     async def _check() -> None:
         tools = await mcp.list_tools()
         tool_names = [t.name for t in tools]
-        assert "wikiskill_inventory" in tool_names
-        assert "wikiskill_context" in tool_names
-        assert "wikiskill_start" in tool_names
-        assert "wikiskill_check" in tool_names
-        assert "wikiskill_handoffs" in tool_names
-        assert "wikiskill_handoff_create" in tool_names
-        assert "wikiskill_handoff_continue" in tool_names
-        assert "wikiskill_session_eligibility" in tool_names
-        assert "wikiskill_next_session" in tool_names
+        assert "wisk_inventory" in tool_names
+        assert "wisk_context" in tool_names
+        assert "wisk_start" in tool_names
+        assert "wisk_check" in tool_names
+        assert "wisk_handoffs" in tool_names
+        assert "wisk_handoff_create" in tool_names
+        assert "wisk_handoff_continue" in tool_names
+        assert "wisk_session_eligibility" in tool_names
+        assert "wisk_next_session" in tool_names
 
     asyncio.run(_check())
 
@@ -252,24 +252,24 @@ def test_pydantic_schema_contracts_derivation() -> None:
 
 
 def test_mcp_tool_execution() -> None:
-    from wikiskill.mcp import wikiskill_context, wikiskill_inventory
+    from wisk.mcp import wisk_context, wisk_inventory
 
-    inv = wikiskill_inventory()
+    inv = wisk_inventory()
     assert inv["Experience"] >= 1
     assert inv["RunSpec"] >= 1
 
-    ctx = wikiskill_context("wikiskill development")
-    assert ctx["task"] == "wikiskill development"
+    ctx = wisk_context("wisk development")
+    assert ctx["task"] == "wisk development"
     assert len(ctx["run_specs"]) >= 1
     assert "active_handoffs" in ctx
 
 
 def test_cli_execution(capsys: pytest.CaptureFixture[str]) -> None:
-    from wikiskill.cli import context, info
+    from wisk.cli import context, info
 
     info()
     captured = capsys.readouterr()
-    assert "wikiskill runtime v0.3.0" in captured.out
+    assert "wisk runtime v0.3.0" in captured.out
 
     context("bootstrap")
     captured = capsys.readouterr()

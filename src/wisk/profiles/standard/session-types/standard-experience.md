@@ -8,7 +8,7 @@ extends: session-types/experience
 context_policy: context-policies/standard-experience
 cadence_policy: cadence-policies/standard-experience
 nudges:
-  - "Prefer useful repository work over producing WikiSkill metadata for its own sake."
+  - "Prefer useful repository work over producing Wisk metadata for its own sake."
   - "A no-useful-change outcome is valid when modification would create churn rather than value."
 ---
 

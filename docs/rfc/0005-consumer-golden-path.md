@@ -8,26 +8,26 @@ created: 2026-09-06
 
 ## Summary
 
-WikiSkill should be opinionated about how a repository adopts the learning runtime while remaining neutral about the repository's domain.
+Wisk should be opinionated about how a repository adopts the learning runtime while remaining neutral about the repository's domain.
 
-A consumer should not have to reproduce WikiSkill's internal directory layout, copy normative specs by hand, pin private implementation details, or rediscover the canonical Experience → Wiki → Skill cycle. The normal path should be:
+A consumer should not have to reproduce Wisk's internal directory layout, copy normative specs by hand, pin private implementation details, or rediscover the canonical Experience → Wiki → Skill cycle. The normal path should be:
 
 ```bash
-wikiskill init .
-wikiskill session start-next "Faça o melhor avanço possível neste repositório"
+wisk init .
+wisk session start-next "Faça o melhor avanço possível neste repositório"
 ```
 
-The consumer owns domain specialization. WikiSkill owns the learning architecture, compatible contracts, bootstrap, upgrade mechanics, and a useful default scheduling profile.
+The consumer owns domain specialization. Wisk owns the learning architecture, compatible contracts, bootstrap, upgrade mechanics, and a useful default scheduling profile.
 
 ## Product boundary
 
-### WikiSkill owns
+### Wisk owns
 
 - the canonical Experience, Wiki, and Skill roles;
 - their canonical RunSpecs;
 - normative specs compatible with the installed runtime;
 - a recommended standard profile that schedules the three roles coherently;
-- bootstrap and upgrade of WikiSkill-managed files;
+- bootstrap and upgrade of Wisk-managed files;
 - the manifest that identifies managed state;
 - safe conflict detection before managed files are replaced;
 - CLI ergonomics that let an explicit `session start-next` fall back to ordinary Experience work when no higher-value maintenance session is due.
@@ -43,25 +43,25 @@ The consumer owns domain specialization. WikiSkill owns the learning architectur
 
 ## Managed and local state
 
-Bootstrap creates `.wikiskill/` with two conceptual surfaces:
+Bootstrap creates `.wisk/` with two conceptual surfaces:
 
 ```text
-.wikiskill/
+.wisk/
   manifest.json
   specs/                  # managed normative contracts
   knowledge/
-    system/               # managed WikiSkill roles/profile
+    system/               # managed Wisk roles/profile
     local/                # consumer-owned specializations
     experiences/          # runtime-produced state
     wiki/                 # runtime-produced durable knowledge
     skills/               # runtime-produced/local skill state as policies allow
 ```
 
-Physical output paths used by existing runtime concepts may coexist with this structure. The key invariant is ownership: files listed in `manifest.json` are managed by WikiSkill; files outside that set are consumer/runtime state and are never overwritten by `upgrade`.
+Physical output paths used by existing runtime concepts may coexist with this structure. The key invariant is ownership: files listed in `manifest.json` are managed by Wisk; files outside that set are consumer/runtime state and are never overwritten by `upgrade`.
 
-Consumers are not expected to understand or maintain every managed file physically present under `.wikiskill/`. The useful measure of adoption complexity is the consumer-owned surface, not the generated file count.
+Consumers are not expected to understand or maintain every managed file physically present under `.wisk/`. The useful measure of adoption complexity is the consumer-owned surface, not the generated file count.
 
-Bootstrap also installs a managed `.wikiskill/.gitignore`. It ignores only reproducible managed state: the local `.gitignore` itself, `manifest.json`, `specs/`, and `knowledge/system/`. Consumer configuration in `knowledge/local/` and runtime-produced Experience, Wiki, and Skill state remain visible to Git. A clean consumer therefore does not acquire a large untracked diff merely by running `init`.
+Bootstrap also installs a managed `.wisk/.gitignore`. It ignores only reproducible managed state: the local `.gitignore` itself, `manifest.json`, `specs/`, and `knowledge/system/`. Consumer configuration in `knowledge/local/` and runtime-produced Experience, Wiki, and Skill state remain visible to Git. A clean consumer therefore does not acquire a large untracked diff merely by running `init`.
 
 Versioned consumer/runtime knowledge is also safe across clones. If a fresh clone already contains files under `knowledge/local/`, `knowledge/experiences/`, `knowledge/wiki/`, or `knowledge/skills/`, `init` preserves those files byte-for-byte and installs the managed surface around them. Existing unmanaged files outside those namespaces are still refused rather than guessed at.
 
@@ -105,22 +105,22 @@ This makes the short external prompt reliable without configuring an arbitrary c
 
 ## Bootstrap
 
-`wikiskill init <repository>` is non-destructive.
+`wisk init <repository>` is non-destructive.
 
 It:
 
 1. refuses to overwrite an existing managed installation;
-2. creates the minimum `.wikiskill/` structure;
-3. installs normative specs, system profile files, and the managed Git ignore rules shipped with the installed WikiSkill version;
+2. creates the minimum `.wisk/` structure;
+3. installs normative specs, system profile files, and the managed Git ignore rules shipped with the installed Wisk version;
 4. records SHA-256 hashes and format/runtime version in `manifest.json`;
 5. validates the resulting bundle;
 6. reports the canonical next command.
 
-An existing unrelated `.wikiskill/` directory is not silently adopted. Migration of legacy/manual installations is a distinct operation because guessing ownership is unsafe. The safe exception is previously versioned consumer/runtime knowledge under `knowledge/local/`, `knowledge/experiences/`, `knowledge/wiki/`, and `knowledge/skills/`; those namespaces are explicitly outside the managed surface and are preserved during initialization.
+An existing unrelated `.wisk/` directory is not silently adopted. Migration of legacy/manual installations is a distinct operation because guessing ownership is unsafe. The safe exception is previously versioned consumer/runtime knowledge under `knowledge/local/`, `knowledge/experiences/`, `knowledge/wiki/`, and `knowledge/skills/`; those namespaces are explicitly outside the managed surface and are preserved during initialization.
 
 ## Upgrade
 
-`wikiskill upgrade <repository>` updates only manifest-managed files.
+`wisk upgrade <repository>` updates only manifest-managed files.
 
 Before writing anything it compares each managed file with the hash recorded by the previous installation. If a managed file was edited locally and the new version would replace it, upgrade reports a conflict and performs no partial upgrade.
 
@@ -138,7 +138,7 @@ The first implementation intentionally has no force-overwrite mode. Resolving an
 
 ## Distribution assets
 
-The wheel must carry the normative `specs/` and canonical role/RunSpec sources used by bootstrap. Source checkouts may read the repository copies directly, but installed consumers must not depend on the WikiSkill Git checkout being present.
+The wheel must carry the normative `specs/` and canonical role/RunSpec sources used by bootstrap. Source checkouts may read the repository copies directly, but installed consumers must not depend on the Wisk Git checkout being present.
 
 The source repository remains the authority for canonical specs and role definitions; packaging should include those same files rather than maintaining divergent hand-copied versions.
 
@@ -187,6 +187,6 @@ The manifest has its own `format_version`, independent of the package semantic v
 
 ## Success criterion
 
-A new repository can adopt WikiSkill through `init`, immediately run `session start-next`, and receive the canonical learning behavior. A real consumer such as Judicial should then be able to delete most of its hand-built WikiSkill bootstrap and retain only domain specialization and learned state.
+A new repository can adopt Wisk through `init`, immediately run `session start-next`, and receive the canonical learning behavior. A real consumer such as Judicial should then be able to delete most of its hand-built Wisk bootstrap and retain only domain specialization and learned state.
 
-If a consumer must understand WikiSkill's package topology, manually synchronize core specs, accept generated managed files as repository noise, or lose learned state when cloning the repository, this RFC has not been satisfied.
+If a consumer must understand Wisk's package topology, manually synchronize core specs, accept generated managed files as repository noise, or lose learned state when cloning the repository, this RFC has not been satisfied.

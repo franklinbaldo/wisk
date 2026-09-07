@@ -6,8 +6,8 @@ from pathlib import Path
 
 import pytest
 
-from wikiskill import WikiSkill
-from wikiskill.mcp import mcp
+from wisk import Wisk
+from wisk.mcp import mcp
 
 ROOT = Path(__file__).parent.parent
 
@@ -42,7 +42,7 @@ def _experience_kwargs() -> dict[str, str]:
 
 def test_preview_experience_is_pure_and_links_run(tmp_path: Path) -> None:
     knowledge_path = _copy_bundle(tmp_path)
-    ws = WikiSkill.open(knowledge_path)
+    ws = Wisk.open(knowledge_path)
 
     preview = ws.preview_experience(**_experience_kwargs())
 
@@ -56,7 +56,7 @@ def test_preview_experience_is_pure_and_links_run(tmp_path: Path) -> None:
 
 def test_record_experience_writes_valid_okf_and_refreshes_runtime(tmp_path: Path) -> None:
     knowledge_path = _copy_bundle(tmp_path)
-    ws = WikiSkill.open(knowledge_path)
+    ws = Wisk.open(knowledge_path)
     before = ws.inventory()["Experience"]
     preview = ws.preview_experience(**_experience_kwargs())
 
@@ -72,30 +72,30 @@ def test_record_experience_writes_valid_okf_and_refreshes_runtime(tmp_path: Path
     }
     assert target.read_text(encoding="utf-8") == preview["content"]
     assert ws.inventory()["Experience"] == before + 1
-    assert WikiSkill.open(knowledge_path).inventory()["Experience"] == before + 1
+    assert Wisk.open(knowledge_path).inventory()["Experience"] == before + 1
 
 
 def test_fastmcp_experience_tools_registered() -> None:
     async def _check() -> None:
         tools = await mcp.list_tools()
         names = {tool.name for tool in tools}
-        assert "wikiskill_experience_preview" in names
-        assert "wikiskill_experience_record" in names
+        assert "wisk_experience_preview" in names
+        assert "wisk_experience_record" in names
 
     asyncio.run(_check())
 
 
 def test_fastmcp_experience_tools_execute(tmp_path: Path) -> None:
-    from wikiskill.mcp import wikiskill_experience_preview, wikiskill_experience_record
+    from wisk.mcp import wisk_experience_preview, wisk_experience_record
 
     knowledge_path = _copy_bundle(tmp_path)
     kwargs = _experience_kwargs()
 
-    preview = wikiskill_experience_preview(path=str(knowledge_path), **kwargs)
+    preview = wisk_experience_preview(path=str(knowledge_path), **kwargs)
     assert preview["id"] == kwargs["experience_id"]
     assert not (knowledge_path / preview["path"]).exists()
 
-    result = wikiskill_experience_record(path=str(knowledge_path), **kwargs)
+    result = wisk_experience_record(path=str(knowledge_path), **kwargs)
     assert result["written"] is True
     result_path = result["path"]
     assert isinstance(result_path, str)
@@ -105,7 +105,7 @@ def test_fastmcp_experience_tools_execute(tmp_path: Path) -> None:
 def test_cli_experience_preview_and_record(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    from wikiskill.cli import experience_preview, experience_record
+    from wisk.cli import experience_preview, experience_record
 
     knowledge_path = _copy_bundle(tmp_path)
     kwargs = _experience_kwargs()

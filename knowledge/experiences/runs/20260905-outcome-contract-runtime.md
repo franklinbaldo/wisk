@@ -4,8 +4,8 @@ id: run-outcomes/20260905-contract-runtime
 run: runs/20260905-contract-guided-runtime
 result_state: merged
 work_status: complete
-summary: "Contract-guided execution is now implemented, typed, backed by declared-empty-type export in okf-parser, and dogfooded by a real persisted WikiSkill run."
-next_move: "Use wikiskill start/check as the default development-loop entrypoint and let future runs evolve RunSpec requirements from observed experience."
+summary: "Contract-guided execution is now implemented, typed, backed by declared-empty-type export in okf-parser, and dogfooded by a real persisted Wisk run."
+next_move: "Use wisk start/check as the default development-loop entrypoint and let future runs evolve RunSpec requirements from observed experience."
 goals_advanced:
   - run-goals/20260905-contract-runtime
 evidence:
@@ -20,4 +20,4 @@ experiences_recorded:
 
 # Run outcome
 
-The first self-hosted WikiSkill run reached its declared success signal and produced a reusable Experience from an architectural fact discovered during execution.
+The first self-hosted Wisk run reached its declared success signal and produced a reusable Experience from an architectural fact discovered during execution.

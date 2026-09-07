@@ -8,7 +8,7 @@ description: "Optional explicit benchmark or decision record about a SkillPropos
 
 A `SkillEvaluation` is an optional explicit snapshot of comparative evidence or a decision record about a `SkillProposal`. It is useful when a consumer wants to materialize a benchmark, fixture-based comparison, regression review, or acceptance record as its own concept.
 
-It is **not** a mandatory fourth phase of WikiSkill learning. The canonical learning roles are Experience → Wiki → Skill: Experience produces execution evidence, Wiki synthesizes and compares it, and a later Skill session decides the candidate's lifecycle.
+It is **not** a mandatory fourth phase of Wisk learning. The canonical learning roles are Experience → Wiki → Skill: Experience produces execution evidence, Wiki synthesizes and compares it, and a later Skill session decides the candidate's lifecycle.
 
 ## Required Frontmatter Fields
 

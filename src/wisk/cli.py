@@ -1,4 +1,4 @@
-"""CLI interface for wikiskill using Cyclopts."""
+"""CLI interface for wisk using Cyclopts."""
 
 from __future__ import annotations
 
@@ -8,11 +8,11 @@ from typing import Any
 
 import cyclopts
 
-from wikiskill import WikiSkill, __version__
-from wikiskill.bootstrap import DEFAULT_PROFILE, init_repository, upgrade_repository
+from wisk import Wisk, __version__
+from wisk.bootstrap import DEFAULT_PROFILE, init_repository, upgrade_repository
 
 app = cyclopts.App(
-    name="wikiskill",
+    name="wisk",
     help="Contract-guided agent execution and persistent learning runtime built on OKF.",
     version=__version__,
 )
@@ -38,36 +38,36 @@ def _resolve_path(path: str | None) -> str:
     """Resolve explicit path or discover a managed consumer bundle from cwd."""
     if path:
         return path
-    managed = Path(".wikiskill") / "knowledge"
+    managed = Path(".wisk") / "knowledge"
     return str(managed if managed.is_dir() else Path("knowledge"))
 
 
-def _wiki(path: str | None) -> WikiSkill:
-    return WikiSkill.open(_resolve_path(path))
+def _wiki(path: str | None) -> Wisk:
+    return Wisk.open(_resolve_path(path))
 
 
 @app.command
 def info() -> None:
-    """Show wikiskill version and runtime information."""
-    print(f"wikiskill runtime v{__version__} (OKF-backed)")
+    """Show wisk version and runtime information."""
+    print(f"wisk runtime v{__version__} (OKF-backed)")
 
 
 @app.command(name="init")
 def init_command(repository: str = ".", *, profile: str = DEFAULT_PROFILE) -> None:
-    """Initialize a repository with the managed WikiSkill consumer bundle."""
+    """Initialize a repository with the managed Wisk consumer bundle."""
     _print_json(init_repository(repository, profile=profile))
 
 
 @app.command
 def upgrade(repository: str = ".") -> None:
-    """Upgrade WikiSkill-managed consumer files without overwriting local state."""
+    """Upgrade Wisk-managed consumer files without overwriting local state."""
     _print_json(upgrade_repository(repository))
 
 
 @app.command
 def serve() -> None:
     """Start the FastMCP server over stdio."""
-    from wikiskill.mcp import mcp
+    from wisk.mcp import mcp
 
     mcp.run()
 

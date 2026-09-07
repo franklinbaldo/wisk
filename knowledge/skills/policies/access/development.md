@@ -4,7 +4,7 @@ id: access-policies/development
 title: Development repository access
 mode: advisory
 repositories:
-  - franklinbaldo/wikiskill
+  - franklinbaldo/wisk
 paths: []
 connectors:
   - github
@@ -15,4 +15,4 @@ instructions:
 
 # Development access policy
 
-Lightweight default access guidance for WikiSkill development.
+Lightweight default access guidance for Wisk development.

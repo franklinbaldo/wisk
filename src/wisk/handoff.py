@@ -1,4 +1,4 @@
-"""Cross-session Handoff lifecycle for the WikiSkill runtime."""
+"""Cross-session Handoff lifecycle for the Wisk runtime."""
 
 from __future__ import annotations
 
@@ -10,18 +10,18 @@ from typing import Any
 from okf_parser import load_bundle
 from okf_parser.service import check_bundle
 
-from wikiskill.runtime import WikiSkill as BaseWikiSkill
+from wisk.runtime import Wisk as BaseWisk
 
 _HANDOFF_STATUS_ACTIVE = "active"
 _HANDOFF_STATUS_ARCHIVED = "archived"
 _TERMINAL_GOAL_STATUSES = frozenset({"achieved", "carried_forward"})
 
 
-class HandoffWikiSkill(BaseWikiSkill):
-    """WikiSkill runtime with resumable cross-session handoffs."""
+class HandoffWisk(BaseWisk):
+    """Wisk runtime with resumable cross-session handoffs."""
 
     @classmethod
-    def open(cls, path: str | Path = "knowledge") -> HandoffWikiSkill:
+    def open(cls, path: str | Path = "knowledge") -> HandoffWisk:
         """Open an OKF bundle while preserving the Handoff-enabled runtime type."""
         root = Path(path).resolve()
         return cls(bundle=load_bundle(root), root_path=root)

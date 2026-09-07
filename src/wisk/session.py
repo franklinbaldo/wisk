@@ -7,7 +7,7 @@ from typing import Any
 
 from okf_parser import load_bundle
 
-from wikiskill.handoff import HandoffWikiSkill
+from wisk.handoff import HandoffWisk
 
 _RUNSPEC_REQUIREMENT_FIELDS = (
     "required_reading_kinds",
@@ -17,11 +17,11 @@ _RUNSPEC_REQUIREMENT_FIELDS = (
 )
 
 
-class SessionWikiSkill(HandoffWikiSkill):
-    """WikiSkill runtime with typed, inheritable session behavior."""
+class SessionWisk(HandoffWisk):
+    """Wisk runtime with typed, inheritable session behavior."""
 
     @classmethod
-    def open(cls, path: str | Path = "knowledge") -> SessionWikiSkill:
+    def open(cls, path: str | Path = "knowledge") -> SessionWisk:
         root = Path(path).resolve()
         return cls(bundle=load_bundle(root), root_path=root)
 

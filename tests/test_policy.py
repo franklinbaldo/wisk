@@ -4,7 +4,7 @@ import json
 import shutil
 from pathlib import Path
 
-from wikiskill import WikiSkill
+from wisk import Wisk
 
 ROOT = Path(__file__).parent.parent
 
@@ -25,7 +25,7 @@ def _write(path: Path, frontmatter: dict[str, object]) -> None:
 
 
 def test_default_output_policy_keeps_three_primary_namespaces() -> None:
-    ws = WikiSkill.open(ROOT / "knowledge")
+    ws = Wisk.open(ROOT / "knowledge")
     assert ws.output_path("Experience") == "experiences/records"
     assert ws.output_path("LoopRun") == "experiences/runs"
     assert ws.output_path("Handoff") == "experiences/handoffs"
@@ -35,8 +35,8 @@ def test_default_output_policy_keeps_three_primary_namespaces() -> None:
 
 
 def test_advisory_policy_explains_without_filtering() -> None:
-    ws = WikiSkill.open(ROOT / "knowledge")
-    context = ws.context("wikiskill development", "session-types/development")
+    ws = Wisk.open(ROOT / "knowledge")
+    context = ws.context("wisk development", "session-types/development")
     assert context["context_policy"]["mode"] == "advisory"
     assert context["access_policy"]["mode"] == "advisory"
     assert context["skills"]
@@ -66,14 +66,14 @@ def test_curated_policy_filters_injected_context_without_claiming_access_enforce
             "id": "session-types/curated-test",
             "title": "Curated test session",
             "purpose": "Exercise context curation",
-            "run_spec": "run-specs/wikiskill-development",
+            "run_spec": "run-specs/wisk-development",
             "extends": "session-types/base",
             "context_policy": "context-policies/skills-only",
             "access_policy": "access-policies/development",
         },
     )
 
-    context = WikiSkill.open(knowledge).context("bootstrap", "session-types/curated-test")
+    context = Wisk.open(knowledge).context("bootstrap", "session-types/curated-test")
     assert context["skills"]
     assert context["wiki"] == []
     assert context["recent_experiences"] == []

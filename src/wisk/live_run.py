@@ -7,7 +7,7 @@ from typing import Any
 
 from okf_parser import load_bundle
 
-from wikiskill.pinning import PinnedWikiSkill
+from wisk.pinning import PinnedWisk
 
 _COMPONENT_PREFIXES = {
     "RunReading": "run-readings",
@@ -38,11 +38,11 @@ _CHECK_STATUSES = frozenset({"pass", "fail", "inconclusive"})
 _WORK_STATUSES = frozenset({"complete", "partial"})
 
 
-class LiveRunWikiSkill(PinnedWikiSkill):
+class LiveRunWisk(PinnedWisk):
     """Pinned runtime that can persist typed state into a live LoopRun."""
 
     @classmethod
-    def open(cls, path: str | Path = "knowledge") -> LiveRunWikiSkill:
+    def open(cls, path: str | Path = "knowledge") -> LiveRunWisk:
         """Open a bundle while preserving the live-run runtime type."""
         root = Path(path).resolve()
         return cls(bundle=load_bundle(root), root_path=root)

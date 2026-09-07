@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from wikiskill.models import generate_pydantic_code, get_schema_contracts
+from wisk.models import generate_pydantic_code, get_schema_contracts
 
 ROOT = Path(__file__).parent.parent
 RUN_TYPES = {

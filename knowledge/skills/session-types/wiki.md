@@ -13,4 +13,4 @@ nudges:
 
 # Wiki session
 
-Canonical synthesis role in the WikiSkill learning cycle. It is policy-neutral; consumers decide what context it can read, what it can write, and when it should run.
+Canonical synthesis role in the Wisk learning cycle. It is policy-neutral; consumers decide what context it can read, what it can write, and when it should run.

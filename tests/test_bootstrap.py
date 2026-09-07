@@ -5,12 +5,12 @@ from pathlib import Path
 
 import pytest
 
-import wikiskill.bootstrap as bootstrap
-from wikiskill import WikiSkill
-from wikiskill.bootstrap import init_repository, upgrade_repository
+import wisk.bootstrap as bootstrap
+from wisk import Wisk
+from wisk.bootstrap import init_repository, upgrade_repository
 
 
-def _record_experiences(ws: WikiSkill, count: int) -> None:
+def _record_experiences(ws: Wisk, count: int) -> None:
     for index in range(count):
         ws.record_experience(
             experience_id=f"consumer-exp-{index}",
@@ -51,7 +51,7 @@ def test_init_creates_conformant_managed_consumer_bundle(tmp_path: Path) -> None
     assert result["status"] == "initialized"
     assert result["conformant"] is True
     assert result["preserved_files"] == 0
-    root = tmp_path / ".wikiskill"
+    root = tmp_path / ".wisk"
     manifest = json.loads((root / "manifest.json").read_text(encoding="utf-8"))
     assert manifest["format_version"] == 1
     assert manifest["profile"] == "standard"
@@ -64,7 +64,7 @@ def test_init_creates_conformant_managed_consumer_bundle(tmp_path: Path) -> None
         root / "knowledge/system/profiles/standard/session-types/standard-experience.md"
     ).is_file()
 
-    ws = WikiSkill.open(root / "knowledge")
+    ws = Wisk.open(root / "knowledge")
     assert ws.next_session() is None
     started = ws.start_next_session("Do the next useful repository work")
     assert started["session_type"] == "session-types/standard-experience"
@@ -72,7 +72,7 @@ def test_init_creates_conformant_managed_consumer_bundle(tmp_path: Path) -> None
 
 
 def test_init_preserves_predeclared_local_specialization(tmp_path: Path) -> None:
-    knowledge = tmp_path / ".wikiskill/knowledge"
+    knowledge = tmp_path / ".wisk/knowledge"
     local = _write_local_experience(knowledge)
     before = local.read_bytes()
 
@@ -81,13 +81,13 @@ def test_init_preserves_predeclared_local_specialization(tmp_path: Path) -> None
     assert result["status"] == "initialized"
     assert result["preserved_files"] == 1
     assert local.read_bytes() == before
-    ws = WikiSkill.open(knowledge)
+    ws = Wisk.open(knowledge)
     started = ws.start_next_session("Do the next useful repository work")
     assert started["session_type"] == "session-types/judicial-experience"
 
 
 def test_init_preserves_versioned_runtime_knowledge(tmp_path: Path) -> None:
-    knowledge = tmp_path / ".wikiskill/knowledge"
+    knowledge = tmp_path / ".wisk/knowledge"
     local = _write_local_experience(knowledge)
     preserved = [local]
     for relative in (
@@ -110,10 +110,10 @@ def test_init_preserves_versioned_runtime_knowledge(tmp_path: Path) -> None:
 
 def test_consumer_specialization_replaces_default_for_scheduler(tmp_path: Path) -> None:
     init_repository(tmp_path)
-    knowledge = tmp_path / ".wikiskill/knowledge"
+    knowledge = tmp_path / ".wisk/knowledge"
     _write_local_experience(knowledge)
 
-    ws = WikiSkill.open(knowledge)
+    ws = Wisk.open(knowledge)
     requested = ws.eligible_sessions(requested=True)
     ids = [item["session_type"] for item in requested]
     assert "session-types/judicial-experience" in ids
@@ -129,24 +129,24 @@ def test_consumer_specialization_replaces_default_for_scheduler(tmp_path: Path) 
 
 def test_standard_profile_runs_wiki_then_skill_as_experience_accumulates(tmp_path: Path) -> None:
     init_repository(tmp_path)
-    knowledge = tmp_path / ".wikiskill/knowledge"
-    ws = WikiSkill.open(knowledge)
+    knowledge = tmp_path / ".wisk/knowledge"
+    ws = Wisk.open(knowledge)
     _record_experiences(ws, 6)
 
-    due = WikiSkill.open(knowledge).next_session()
+    due = Wisk.open(knowledge).next_session()
     assert due is not None
     assert due["session_type"] == "session-types/standard-wiki"
 
-    wiki_run = WikiSkill.open(knowledge).start_next_session("Do the next useful work")
+    wiki_run = Wisk.open(knowledge).start_next_session("Do the next useful work")
     assert wiki_run["session_type"] == "session-types/standard-wiki"
 
-    after_wiki = WikiSkill.open(knowledge).next_session()
+    after_wiki = Wisk.open(knowledge).next_session()
     assert after_wiki is not None
     assert after_wiki["session_type"] == "session-types/standard-skill"
 
 
 def test_init_refuses_unmanaged_existing_state_without_touching_it(tmp_path: Path) -> None:
-    root = tmp_path / ".wikiskill"
+    root = tmp_path / ".wisk"
     root.mkdir()
     marker = root / "legacy.txt"
     marker.write_text("keep me", encoding="utf-8")
@@ -161,7 +161,7 @@ def test_init_refuses_unmanaged_existing_state_without_touching_it(tmp_path: Pat
 
 def test_upgrade_preserves_consumer_owned_files(tmp_path: Path) -> None:
     init_repository(tmp_path)
-    local = tmp_path / ".wikiskill/knowledge/local/repository-note.txt"
+    local = tmp_path / ".wisk/knowledge/local/repository-note.txt"
     local.parent.mkdir(parents=True)
     local.write_text("consumer-owned", encoding="utf-8")
 
@@ -174,7 +174,7 @@ def test_upgrade_preserves_consumer_owned_files(tmp_path: Path) -> None:
 
 def test_upgrade_detects_edited_managed_file_before_writing(tmp_path: Path) -> None:
     init_repository(tmp_path)
-    root = tmp_path / ".wikiskill"
+    root = tmp_path / ".wisk"
     managed = root / "knowledge/system/canonical/session-types/experience.md"
     managed.write_text(managed.read_text(encoding="utf-8") + "\nlocal edit\n", encoding="utf-8")
     before_manifest = (root / "manifest.json").read_text(encoding="utf-8")
@@ -192,7 +192,7 @@ def test_upgrade_rolls_back_live_state_when_final_write_fails(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     init_repository(tmp_path)
-    root = tmp_path / ".wikiskill"
+    root = tmp_path / ".wisk"
     managed = root / "knowledge/system/canonical/session-types/experience.md"
     before_managed = managed.read_bytes()
     before_manifest = (root / "manifest.json").read_bytes()

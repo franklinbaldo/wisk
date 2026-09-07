@@ -4,7 +4,7 @@ import shutil
 from datetime import UTC, datetime
 from pathlib import Path
 
-from wikiskill import WikiSkill
+from wisk import Wisk
 
 ROOT = Path(__file__).parent.parent
 NOW = datetime(2026, 9, 5, 20, 0, tzinfo=UTC)
@@ -17,7 +17,7 @@ def _copy_bundle(tmp_path: Path) -> Path:
 
 
 def test_on_demand_session_is_explainable_but_not_auto_selected() -> None:
-    ws = WikiSkill.open(ROOT / "knowledge")
+    ws = Wisk.open(ROOT / "knowledge")
     automatic = ws.session_eligibility("session-types/inference", now=NOW)
     requested = ws.session_eligibility("session-types/inference", now=NOW, requested=True)
     assert "explicit-request" not in automatic["reasons"]
@@ -26,7 +26,7 @@ def test_on_demand_session_is_explainable_but_not_auto_selected() -> None:
 
 
 def test_canonical_roles_do_not_duplicate_consumer_cadence() -> None:
-    ws = WikiSkill.open(ROOT / "knowledge")
+    ws = Wisk.open(ROOT / "knowledge")
     for session_type in (
         "session-types/experience",
         "session-types/wiki",
@@ -41,7 +41,7 @@ def test_canonical_roles_do_not_duplicate_consumer_cadence() -> None:
 
 
 def test_new_experiences_activate_wiki_maintainer() -> None:
-    result = WikiSkill.open(ROOT / "knowledge").session_eligibility(
+    result = Wisk.open(ROOT / "knowledge").session_eligibility(
         "session-types/wiki-maintainer", now=NOW
     )
     assert result["eligible"] is True
@@ -51,7 +51,7 @@ def test_new_experiences_activate_wiki_maintainer() -> None:
 
 def test_targeted_handoff_activates_compatible_session(tmp_path: Path) -> None:
     knowledge = _copy_bundle(tmp_path)
-    ws = WikiSkill.open(knowledge)
+    ws = Wisk.open(knowledge)
     source = ws.start_run("source", session_type_id="session-types/development")
     ws.create_handoff(
         handoff_id="evaluate-next",
@@ -61,7 +61,7 @@ def test_targeted_handoff_activates_compatible_session(tmp_path: Path) -> None:
         state="Candidate is ready for independent evaluation.",
         next_action="Run the evaluator contract.",
     )
-    result = WikiSkill.open(knowledge).session_eligibility(
+    result = Wisk.open(knowledge).session_eligibility(
         "session-types/evaluator", now=datetime.now(UTC)
     )
     assert result["eligible"] is True
@@ -91,7 +91,7 @@ Consumer-owned specialization of the evaluator role.
         encoding="utf-8",
     )
 
-    ws = WikiSkill.open(knowledge)
+    ws = Wisk.open(knowledge)
     source = ws.start_run("source", session_type_id="session-types/development")
     ws.create_handoff(
         handoff_id="evaluate-specialized-next",
@@ -102,7 +102,7 @@ Consumer-owned specialization of the evaluator role.
         next_action="Run the specialized evaluator contract.",
     )
 
-    reopened = WikiSkill.open(knowledge)
+    reopened = Wisk.open(knowledge)
     eligible = reopened.eligible_sessions(now=datetime.now(UTC))
     ids = [item["session_type"] for item in eligible]
     assert "session-types/judicial-evaluator" in ids
@@ -116,7 +116,7 @@ Consumer-owned specialization of the evaluator role.
 
 
 def test_next_session_is_deterministic_by_priority() -> None:
-    ws = WikiSkill.open(ROOT / "knowledge")
+    ws = Wisk.open(ROOT / "knowledge")
     eligible = ws.eligible_sessions(now=NOW)
     assert eligible == sorted(eligible, key=lambda item: (-item["priority"], item["session_type"]))
     assert ws.next_session(now=NOW) == (eligible[0] if eligible else None)

@@ -13,4 +13,4 @@ nudges:
 
 # Skill session
 
-Canonical procedural-evolution role in the WikiSkill learning cycle. It is policy-neutral; consumers compose access, context, output, and cadence in their own specializations.
+Canonical procedural-evolution role in the Wisk learning cycle. It is policy-neutral; consumers compose access, context, output, and cadence in their own specializations.

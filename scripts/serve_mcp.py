@@ -16,7 +16,7 @@ from pathlib import Path
 # Ensure src/ is in path for standalone execution
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from wikiskill.mcp import mcp
+from wisk.mcp import mcp
 
 
 def main() -> None:

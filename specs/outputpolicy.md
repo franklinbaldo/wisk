@@ -1,12 +1,12 @@
 ---
 type: ConceptSpecification
 concept_type: OutputPolicy
-description: "Maps WikiSkill concept families to semantic output namespaces inside the repository knowledge tree."
+description: "Maps Wisk concept families to semantic output namespaces inside the repository knowledge tree."
 ---
 
 # Concept: OutputPolicy
 
-`OutputPolicy` keeps storage conventions explicit while preserving the three primary WikiSkill stages: `experiences/`, `wiki/`, and `skills/`.
+`OutputPolicy` keeps storage conventions explicit while preserving the three primary Wisk stages: `experiences/`, `wiki/`, and `skills/`.
 
 ## Required Frontmatter Fields
 

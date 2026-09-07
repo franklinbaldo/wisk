@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from wikiskill import WikiSkill
-from wikiskill.bootstrap import init_repository
+from wisk import Wisk
+from wisk.bootstrap import init_repository
 
 JUDICIAL_EXPERIENCE = """---
 type: SessionType
@@ -59,7 +59,7 @@ Consumer specialization of canonical Skill.
 
 
 def _write_judicial_local_bundle(repository: Path) -> Path:
-    local = repository / ".wikiskill/knowledge/local"
+    local = repository / ".wisk/knowledge/local"
     (local / "session-types").mkdir(parents=True)
     (local / "run-specs").mkdir(parents=True)
     (local / "session-types/judicial-experience.md").write_text(
@@ -74,12 +74,12 @@ def _write_judicial_local_bundle(repository: Path) -> Path:
         JUDICIAL_SKILL,
         encoding="utf-8",
     )
-    return repository / ".wikiskill/knowledge"
+    return repository / ".wisk/knowledge"
 
 
 def _record_experiences(knowledge: Path, count: int) -> None:
     for index in range(count):
-        WikiSkill.open(knowledge).record_experience(
+        Wisk.open(knowledge).record_experience(
             experience_id=f"judicial-exp-{index}",
             title=f"Judicial experience {index}",
             timestamp=f"2026-09-06T1{index}:00:00+00:00",
@@ -97,7 +97,7 @@ def test_judicial_consumer_keeps_only_local_specializations(tmp_path: Path) -> N
     assert initialized["conformant"] is True
     assert initialized["preserved_files"] == 3
 
-    ws = WikiSkill.open(knowledge)
+    ws = Wisk.open(knowledge)
     started = ws.start_next_session("Faça o melhor avanço substantivo possível no Judicial")
     assert started["session_type"] == "session-types/judicial-experience"
     assert started["run_spec"] == "run-specs/experience"
@@ -121,18 +121,18 @@ def test_judicial_consumer_uses_canonical_wiki_then_local_skill(
     init_repository(tmp_path)
     _record_experiences(knowledge, 6)
 
-    first_due = WikiSkill.open(knowledge).next_session()
+    first_due = Wisk.open(knowledge).next_session()
     assert first_due is not None
     assert first_due["session_type"] == "session-types/standard-wiki"
 
-    wiki_run = WikiSkill.open(knowledge).start_next_session("Synthesize accumulated evidence")
+    wiki_run = Wisk.open(knowledge).start_next_session("Synthesize accumulated evidence")
     assert wiki_run["session_type"] == "session-types/standard-wiki"
 
-    second_due = WikiSkill.open(knowledge).next_session()
+    second_due = Wisk.open(knowledge).next_session()
     assert second_due is not None
     assert second_due["session_type"] == "session-types/judicial-skill"
 
-    skill_run = WikiSkill.open(knowledge).start_next_session("Evolve reusable Judicial procedure")
+    skill_run = Wisk.open(knowledge).start_next_session("Evolve reusable Judicial procedure")
     assert skill_run["session_type"] == "session-types/judicial-skill"
     assert skill_run["run_spec"] == "run-specs/judicial-skill"
     requirements = {item["requirement"] for item in skill_run["check"]["unsatisfied"]}

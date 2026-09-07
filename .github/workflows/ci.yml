@@ -55,13 +55,13 @@ jobs:
       - name: Smoke installed consumer golden path
         shell: bash
         run: |
-          WHEEL="$GITHUB_WORKSPACE/$(find dist -name 'wikiskill-*.whl' -print -quit)"
+          WHEEL="$GITHUB_WORKSPACE/$(find dist -name 'wisk-*.whl' -print -quit)"
           CONSUMER="$(mktemp -d)"
           cd "$CONSUMER"
-          uvx --from "$WHEEL" wikiskill init .
-          test -f .wikiskill/manifest.json
-          uvx --from "$WHEEL" wikiskill session start-next "Do the best useful work available"
-          find .wikiskill/knowledge/experiences/runs -name '*.md' -print -quit | grep -q .
+          uvx --from "$WHEEL" wisk init .
+          test -f .wisk/manifest.json
+          uvx --from "$WHEEL" wisk session start-next "Do the best useful work available"
+          find .wisk/knowledge/experiences/runs -name '*.md' -print -quit | grep -q .
 
       - name: Run Pytest
         run: uv run pytest -v

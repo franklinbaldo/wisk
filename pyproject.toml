@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "wikiskill"
+name = "wisk"
 dynamic = ["version"]
 description = "Contract-guided agent execution and persistent learning runtime built on OKF."
 readme = "README.md"
@@ -13,9 +13,7 @@ authors = [
     { name = "Franklin Silveira Baldo", email = "franklinbaldo@gmail.com" },
 ]
 dependencies = [
-    # Temporary until okf-parser 0.45.8 is published. This commit is merged on upstream main
-    # and provides contract-first export for declared types without concrete instances.
-    "okf-parser @ git+https://github.com/franklinbaldo/okf-parser.git@14b95cf223cd298c8b52958cd1e71fec27d74a53",
+    "okf-parser>=0.45.8",
     "ibis-framework[duckdb]>=9.0",
     "duckdb>=1.0",
     "networkx>=3.2",
@@ -25,11 +23,11 @@ dependencies = [
 ]
 
 [project.scripts]
-wikiskill = "wikiskill.cli:app"
+wisk = "wisk.cli:app"
 
 [project.urls]
-Homepage = "https://github.com/franklinbaldo/wikiskill"
-Repository = "https://github.com/franklinbaldo/wikiskill"
+Homepage = "https://github.com/franklinbaldo/wisk"
+Repository = "https://github.com/franklinbaldo/wisk"
 
 [dependency-groups]
 dev = [
@@ -42,26 +40,23 @@ dev = [
     "vulture>=2.14",
 ]
 
-[tool.hatch.metadata]
-allow-direct-references = true
-
 [tool.hatch.version]
-path = "src/wikiskill/__init__.py"
+path = "src/wisk/__init__.py"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/wikiskill"]
+packages = ["src/wisk"]
 
 # Consumer bootstrap must work from an installed wheel, not only from this Git checkout.
 # These force-includes single-source the normative contracts and canonical learning roles
-# that are also used by WikiSkill's own dogfood bundle.
+# that are also used by Wisk's own dogfood bundle.
 [tool.hatch.build.targets.wheel.force-include]
-"specs" = "wikiskill/_assets/specs"
-"knowledge/skills/session-types/experience.md" = "wikiskill/_assets/canonical/session-types/experience.md"
-"knowledge/skills/session-types/wiki.md" = "wikiskill/_assets/canonical/session-types/wiki.md"
-"knowledge/skills/session-types/skill.md" = "wikiskill/_assets/canonical/session-types/skill.md"
-"knowledge/skills/run-specs/experience.md" = "wikiskill/_assets/canonical/run-specs/experience.md"
-"knowledge/skills/run-specs/wiki.md" = "wikiskill/_assets/canonical/run-specs/wiki.md"
-"knowledge/skills/run-specs/skill.md" = "wikiskill/_assets/canonical/run-specs/skill.md"
+"specs" = "wisk/_assets/specs"
+"knowledge/skills/session-types/experience.md" = "wisk/_assets/canonical/session-types/experience.md"
+"knowledge/skills/session-types/wiki.md" = "wisk/_assets/canonical/session-types/wiki.md"
+"knowledge/skills/session-types/skill.md" = "wisk/_assets/canonical/session-types/skill.md"
+"knowledge/skills/run-specs/experience.md" = "wisk/_assets/canonical/run-specs/experience.md"
+"knowledge/skills/run-specs/wiki.md" = "wisk/_assets/canonical/run-specs/wiki.md"
+"knowledge/skills/run-specs/skill.md" = "wisk/_assets/canonical/run-specs/skill.md"
 
 [tool.ruff]
 target-version = "py312"
@@ -75,16 +70,16 @@ exclude_dirs = ["tests", ".venv"]
 skips = ["B101"]
 
 [tool.vulture]
-paths = ["src/wikiskill"]
+paths = ["src/wisk"]
 min_confidence = 80
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "--cov=wikiskill --cov-report=term-missing --cov-fail-under=80"
+addopts = "--cov=wisk --cov-report=term-missing --cov-fail-under=80"
 
 [tool.coverage.run]
 branch = true
-source = ["src/wikiskill"]
+source = ["src/wisk"]
 
 [tool.coverage.report]
 show_missing = true

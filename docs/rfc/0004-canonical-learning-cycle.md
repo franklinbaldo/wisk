@@ -12,7 +12,7 @@ Proposed.
 
 ## Decision
 
-WikiSkill has three canonical learning roles, represented by `SessionType`s:
+Wisk has three canonical learning roles, represented by `SessionType`s:
 
 1. **Experience** — execute real work using the available procedural guidance and record what actually happened.
 2. **Wiki** — synthesize multiple experiences into durable knowledge, including comparative evidence when different skill variants were exercised.
@@ -70,13 +70,13 @@ Creating a proposal and accepting it are different moments. A candidate must be 
 
 ## 4. `SkillEvaluation` is an artifact, not a session role
 
-`SkillEvaluation` may remain as an optional explicit snapshot of comparative evidence or a decision record when a consumer needs one. It must not define a separate mandatory stage in the canonical learning cycle, and WikiSkill must not require a dedicated evaluator SessionType for skill evolution to work.
+`SkillEvaluation` may remain as an optional explicit snapshot of comparative evidence or a decision record when a consumer needs one. It must not define a separate mandatory stage in the canonical learning cycle, and Wisk must not require a dedicated evaluator SessionType for skill evolution to work.
 
 Consumers may still define specialized reviewer/evaluator sessions for their own workflows. Those are consumer specializations, not a fourth core learning role.
 
 ## 5. Canonical SessionTypes and specialization
 
-WikiSkill should ship canonical parent SessionTypes corresponding to the three roles:
+Wisk should ship canonical parent SessionTypes corresponding to the three roles:
 
 - `session-types/experience`
 - `session-types/wiki`
@@ -96,11 +96,11 @@ There is no universal list of substantive checks that all three roles must satis
 - Wiki checks establish that synthesis is grounded in experiences and does not erase meaningful differences or counterevidence.
 - Skill checks establish that a procedural intervention is justified by accumulated knowledge and that its lifecycle action is explicit.
 
-Consumer RunSpecs may add domain checks. Core WikiSkill should provide the role and lineage semantics, not hard-code legal, software-development, newsroom, or research quality criteria.
+Consumer RunSpecs may add domain checks. Core Wisk should provide the role and lineage semantics, not hard-code legal, software-development, newsroom, or research quality criteria.
 
 ## 7. Lineage invariant
 
-WikiSkill should make the following path inspectable through ordinary OKF links and authored identifiers:
+Wisk should make the following path inspectable through ordinary OKF links and authored identifiers:
 
 ```text
 AgentSkill incumbent/candidate
@@ -146,6 +146,6 @@ Those decisions can evolve from evidence without changing the three-role model.
 
 Compatibility should not obscure the model. Existing session names may remain temporarily as children/aliases, but new consumers should learn the Experience / Wiki / Skill vocabulary directly.
 
-The migration is successful when a consumer can adopt WikiSkill by specializing these three roles, and a skill candidate can move from proposal through real-world experience and wiki synthesis to a later skill decision without requiring a fourth orchestration role.
+The migration is successful when a consumer can adopt Wisk by specializing these three roles, and a skill candidate can move from proposal through real-world experience and wiki synthesis to a later skill decision without requiring a fourth orchestration role.
 
 Closes the design question raised in #56.

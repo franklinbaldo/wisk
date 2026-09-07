@@ -21,4 +21,4 @@ description: "Declares what information is appropriate to surface to a SessionTy
 - `exclude`: Context categories that are off-limits or omitted from curated context
 - `instructions`: Human-readable guidance shown to the agent
 
-`advisory` explains the intended boundary without coercion. `curated` also filters the context returned by the WikiSkill runtime, while still not pretending to restrict external tools the host makes available.
+`advisory` explains the intended boundary without coercion. `curated` also filters the context returned by the Wisk runtime, while still not pretending to restrict external tools the host makes available.

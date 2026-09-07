@@ -8,27 +8,27 @@ created: 2026-09-02
 
 ## Summary
 
-`wikiskill` turns a Git repository into a persistent environment in which agents can work, learn, negotiate changes, and progressively specialize their operating knowledge.
+`wisk` turns a Git repository into a persistent environment in which agents can work, learn, negotiate changes, and progressively specialize their operating knowledge.
 
 The central engineering thesis is:
 
 > **The repository is the persistent container of the skill and of its evolution.**
 
-A repository is not merely a place where a WikiSkill runtime stores files. It is the durable work environment agents already know how to operate through Git and repository hosting platforms: they inspect code and documents, create issues, implement changes, open pull requests, review, run CI, merge, revert, and leave an auditable history for the next agent.
+A repository is not merely a place where a Wisk runtime stores files. It is the durable work environment agents already know how to operate through Git and repository hosting platforms: they inspect code and documents, create issues, implement changes, open pull requests, review, run CI, merge, revert, and leave an auditable history for the next agent.
 
-`wikiskill` should make it easy to take an existing repository with a concrete objective, initialize the WikiSkill loop, point an agent at that repository, assign a role, and let the agent understand what to do next from the repository itself.
+`wisk` should make it easy to take an existing repository with a concrete objective, initialize the Wisk loop, point an agent at that repository, assign a role, and let the agent understand what to do next from the repository itself.
 
 ## Primary theoretical reference
 
 This project is inspired by:
 
-**Liyan Tang, Cyrus Rashtchian, Chun-Sung Ferng, Andrew Tomkins, Da-Cheng Juan, Tu Vu. _WikiSkill: Compiling Agent Experience into Persistent Knowledge for Skill Evolution_. 2026.**
+**Liyan Tang, Cyrus Rashtchian, Chun-Sung Ferng, Andrew Tomkins, Da-Cheng Juan, Tu Vu. _Wisk: Compiling Agent Experience into Persistent Knowledge for Skill Evolution_. 2026.**
 
 Canonical preprint:
 
 <https://arxiv.org/abs/2608.27454>
 
-The paper introduces WikiSkill as a framework that separates:
+The paper introduces Wisk as a framework that separates:
 
 1. raw agent execution experience;
 2. accumulated persistent knowledge in a wiki;
@@ -84,11 +84,11 @@ The hard problem is not giving an agent Git access. The hard problem is making t
 
 ## Product thesis
 
-`wikiskill` should make the following workflow easy:
+`wisk` should make the following workflow easy:
 
 ```text
 existing repository with a specific objective
-  -> wikiskill init .
+  -> wisk init .
   -> repository gains persistent agent-learning structure
   -> agent receives Git/repository access
   -> agent is assigned a role
@@ -105,7 +105,7 @@ The desired user experience is intentionally close to:
 
 ```bash
 cd some-repository
-wikiskill init .
+wisk init .
 ```
 
 After bootstrap, a user should be able to tell an agent something as small as:
@@ -197,7 +197,7 @@ Provide deterministic evaluation surfaces for properties that can be automated:
 
 CI is part of evaluation but is not equivalent to the full semantic `SkillEvaluation` concept.
 
-## WikiSkill conceptual loop
+## Wisk conceptual loop
 
 The project adopts the core separation from the paper:
 
@@ -225,7 +225,7 @@ These names are engineering concepts of this project unless explicitly present i
 
 Agents should not need to infer an unconstrained persona every time they enter a repository.
 
-`wikiskill` should provide a small set of predefined roles that repositories may enable, specialize, or extend.
+`wisk` should provide a small set of predefined roles that repositories may enable, specialize, or extend.
 
 Initial role vocabulary:
 
@@ -307,7 +307,7 @@ The role system should remain small and composable. Repositories may define doma
 
 ## Role-driven entry
 
-An agent entering a WikiSkill-enabled repository should be able to discover its working context from repository state rather than from a long external prompt.
+An agent entering a Wisk-enabled repository should be able to discover its working context from repository state rather than from a long external prompt.
 
 Conceptually:
 
@@ -328,12 +328,12 @@ The external prompt should increasingly describe **intent and role**, while the 
 
 ## Bootstrap ergonomics
 
-Configuring a WikiSkill loop manually is too expensive.
+Configuring a Wisk loop manually is too expensive.
 
 The CLI should aim toward:
 
 ```bash
-wikiskill init .
+wisk init .
 ```
 
 `init` should inspect the existing repository and non-destructively establish the minimum runtime contract.
@@ -348,7 +348,7 @@ Depending on repository state and future `okf-parser` capabilities, initializati
 - initial agent skills;
 - `.okfignore`;
 - CI validation hooks;
-- WikiSkill configuration;
+- Wisk configuration;
 - instructions for agents entering via Git.
 
 Initialization must not overwrite legitimate repository conventions without explicit intent.
@@ -357,7 +357,7 @@ A repository with existing agent instructions should be adapted, not replaced bl
 
 ## OKF as the structural substrate
 
-WikiSkill is the semantic/runtime layer.
+Wisk is the semantic/runtime layer.
 
 `okf-parser` is the structural knowledge layer.
 
@@ -375,7 +375,7 @@ OKF Markdown
        -> NetworkX
        -> DuckDB
        -> schema export
-  -> wikiskill
+  -> wisk
        -> roles
        -> experience semantics
        -> consolidation
@@ -385,7 +385,7 @@ OKF Markdown
        -> next-action ergonomics
 ```
 
-`wikiskill` must aggressively reuse `okf-parser` rather than reimplement:
+`wisk` must aggressively reuse `okf-parser` rather than reimplement:
 
 - frontmatter parsing;
 - concept identity;
@@ -395,11 +395,11 @@ OKF Markdown
 - relational materialization;
 - generic OKF validation.
 
-If a missing capability is generic, improve `okf-parser` rather than hiding a parallel implementation inside WikiSkill.
+If a missing capability is generic, improve `okf-parser` rather than hiding a parallel implementation inside Wisk.
 
 Relevant parser integration issue:
 
-- `franklinbaldo/okf-parser#214` — primitives for external WikiSkill runtimes over OKF.
+- `franklinbaldo/okf-parser#214` — primitives for external Wisk runtimes over OKF.
 
 ## Repository state as a graph
 
@@ -451,7 +451,7 @@ The next proposal should be able to learn from that failure rather than rediscov
 
 ## Dogfooding
 
-`franklinbaldo/wikiskill` must be the first serious consumer of WikiSkill.
+`franklinbaldo/wisk` must be the first serious consumer of Wisk.
 
 The project should use its own runtime as soon as each capability becomes usable.
 
@@ -459,23 +459,23 @@ Bootstrap may initially require manual OKF documents, but manual operation shoul
 
 ```text
 implement record-experience
-  -> start using it for wikiskill development
+  -> start using it for wisk development
 
 implement consolidation
-  -> start using it for wikiskill development
+  -> start using it for wisk development
 
 implement proposals/evaluation
-  -> evolve wikiskill's own skills through them
+  -> evolve wisk's own skills through them
 
 implement MCP
-  -> agents working on wikiskill prefer the MCP runtime
+  -> agents working on wisk prefer the MCP runtime
 ```
 
 Dogfooding must represent real work, not synthetic demo entries.
 
 ## Issues and PRs are part of the work loop, not replacements for knowledge
 
-A WikiSkill-enabled agent may autonomously:
+A Wisk-enabled agent may autonomously:
 
 - create issues;
 - close obsolete issues;
@@ -486,7 +486,7 @@ A WikiSkill-enabled agent may autonomously:
 - merge safe validated changes when repository policy permits;
 - reject or close unrecoverable changes.
 
-But durable lessons from that activity belong in the WikiSkill knowledge graph when they have future value.
+But durable lessons from that activity belong in the Wisk knowledge graph when they have future value.
 
 Do not assume GitHub issue history alone is sufficient memory.
 
@@ -495,7 +495,7 @@ Do not assume GitHub issue history alone is sufficient memory.
 The long-term ergonomics target is approximately:
 
 ```bash
-wikiskill init .
+wisk init .
 ```
 
 Then an agent receives:
@@ -525,9 +525,9 @@ This RFC does not propose:
 - replacing GitHub/Git with a custom task system;
 - storing every conversation transcript forever;
 - treating every execution observation as a skill;
-- making WikiSkill equivalent to RAG;
+- making Wisk equivalent to RAG;
 - fine-tuning model weights;
-- embedding WikiSkill taxonomy into `okf-parser` core;
+- embedding Wisk taxonomy into `okf-parser` core;
 - introducing a mandatory vector database;
 - introducing a mandatory persistent SQL database;
 - building an external orchestration service as the source of truth.
@@ -555,7 +555,7 @@ Git repository
   |     +-- skill evaluations
   |     +-- loop runs
   |
-  +-- wikiskill runtime
+  +-- wisk runtime
         +-- init
         +-- context
         +-- role selection/contract
@@ -575,7 +575,7 @@ This RFC implies the following priorities.
 
 ### Priority 1 — bootstrap
 
-Make a repository WikiSkill-aware quickly and non-destructively.
+Make a repository Wisk-aware quickly and non-destructively.
 
 ### Priority 2 — context
 
@@ -591,7 +591,7 @@ The runtime should make role-driven operation explicit and easy.
 
 ### Priority 5 — consolidation before skill mutation
 
-Do not build a direct `trace -> rewrite skill` shortcut as the primary mechanism. Persistent knowledge is an intentional intermediate layer, following the core WikiSkill idea.
+Do not build a direct `trace -> rewrite skill` shortcut as the primary mechanism. Persistent knowledge is an intentional intermediate layer, following the core Wisk idea.
 
 ### Priority 6 — evaluation and asymmetric rollback
 
@@ -606,7 +606,7 @@ Modern agents should be able to enter and operate the repository through a small
 The project succeeds when this becomes normal:
 
 1. choose a repository with a specific objective;
-2. run `wikiskill init`;
+2. run `wisk init`;
 3. give an agent repository access;
 4. assign a role;
 5. let the agent perform useful autonomous work;
@@ -614,7 +614,7 @@ The project succeeds when this becomes normal:
 
 The strongest test is dogfooding:
 
-> Does building and operating `wikiskill` make `wikiskill` progressively better at helping agents build and operate `wikiskill`?
+> Does building and operating `wisk` make `wisk` progressively better at helping agents build and operate `wisk`?
 
 If not, the runtime is not yet delivering the core product thesis.
 
@@ -622,11 +622,11 @@ If not, the runtime is not yet delivering the core product thesis.
 
 1. What is the smallest useful set of built-in roles?
 2. How should repositories specialize roles without copying large prompt templates?
-3. What exact information should `wikiskill init` infer from an existing repository?
+3. What exact information should `wisk init` infer from an existing repository?
 4. Which repository hosting concepts should remain adapters rather than core semantics?
-5. How should WikiSkill select relevant context without prematurely requiring embeddings?
+5. How should Wisk select relevant context without prematurely requiring embeddings?
 6. What should be the promotion threshold from WikiEntry to SkillProposal?
 7. How should generic evaluation contracts coexist with domain-specific metrics?
 8. Which additional generic primitives should move upstream into `okf-parser`?
-9. How much of issue/PR lifecycle should WikiSkill expose directly versus leaving entirely to the agent's GitHub tooling?
+9. How much of issue/PR lifecycle should Wisk expose directly versus leaving entirely to the agent's GitHub tooling?
 10. How should repositories express permissions for roles so that autonomous work remains bounded and auditable?

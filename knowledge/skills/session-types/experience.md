@@ -12,4 +12,4 @@ nudges:
 
 # Experience session
 
-Canonical execution role in the WikiSkill learning cycle. It deliberately carries no context, access, output, or cadence policy: consumer work sessions specialize this role and compose the policies appropriate to their environment.
+Canonical execution role in the Wisk learning cycle. It deliberately carries no context, access, output, or cadence policy: consumer work sessions specialize this role and compose the policies appropriate to their environment.

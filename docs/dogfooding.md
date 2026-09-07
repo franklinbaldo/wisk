@@ -1,10 +1,10 @@
 # Progressive Dogfooding Protocol
 
-`wikiskill` develops itself through the same execution and learning runtime it offers to consumers.
+`wisk` develops itself through the same execution and learning runtime it offers to consumers.
 
 ## Contract-guided development
 
-Before substantive work, an agent development session should create a live `LoopRun` governed by `knowledge/run-specs/wikiskill-development.md`.
+Before substantive work, an agent development session should create a live `LoopRun` governed by `knowledge/run-specs/wisk-development.md`.
 
 The run starts intentionally incomplete and is filled as the session advances with:
 
@@ -42,7 +42,7 @@ Development sessions use the dogfood `RunSpec` and maintain `LoopRun` plus typed
 
 ### Phase 2 — Runtime-assisted start/check
 
-Once `wikiskill start` / `wikiskill check` and equivalent FastMCP tools exist, run scaffolding and requirement inspection move behind the runtime API.
+Once `wisk start` / `wisk check` and equivalent FastMCP tools exist, run scaffolding and requirement inspection move behind the runtime API.
 
 ### Phase 3 — Experience consolidation
 
@@ -54,4 +54,4 @@ Changes to procedural skills and execution contracts are proposed/evaluated thro
 
 ### Phase 5 — MCP-driven operation
 
-Agent sessions primarily operate through `wikiskill_*` FastMCP tools, with the OKF graph remaining the durable source of truth.
+Agent sessions primarily operate through `wisk_*` FastMCP tools, with the OKF graph remaining the durable source of truth.

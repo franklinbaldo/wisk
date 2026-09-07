@@ -7,10 +7,10 @@ from pathlib import Path
 
 import pytest
 
-from wikiskill.mcp import (
+from wisk.mcp import (
     mcp,
-    wikiskill_run_reading,
-    wikiskill_start,
+    wisk_run_reading,
+    wisk_start,
 )
 
 ROOT = Path(__file__).parent.parent
@@ -28,25 +28,25 @@ def test_mcp_exposes_scheduler_and_typed_run_writes() -> None:
 
     names = asyncio.run(_names())
     assert {
-        "wikiskill_start_next_session",
-        "wikiskill_run_reading",
-        "wikiskill_run_goal",
-        "wikiskill_run_decision",
-        "wikiskill_run_evidence",
-        "wikiskill_run_check_record",
-        "wikiskill_run_outcome",
+        "wisk_start_next_session",
+        "wisk_run_reading",
+        "wisk_run_goal",
+        "wisk_run_decision",
+        "wisk_run_evidence",
+        "wisk_run_check_record",
+        "wisk_run_outcome",
     } <= names
 
 
 def test_mcp_can_start_and_progress_run_at_explicit_path(tmp_path: Path) -> None:
     knowledge = _copy_bundle(tmp_path)
-    started = wikiskill_start(
+    started = wisk_start(
         "exercise MCP live-run surface",
         "run-specs/inference",
         "session-types/inference",
         str(knowledge),
     )
-    result = wikiskill_run_reading(
+    result = wisk_run_reading(
         started["run_id"],
         "active-handoffs",
         "active-handoffs",
@@ -65,10 +65,10 @@ def test_cli_run_write_accepts_explicit_bundle_path(
     tmp_path: Path,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    from wikiskill.cli import run_reading
+    from wisk.cli import run_reading
 
     knowledge = _copy_bundle(tmp_path)
-    started = wikiskill_start(
+    started = wisk_start(
         "exercise CLI live-run surface",
         "run-specs/inference",
         "session-types/inference",

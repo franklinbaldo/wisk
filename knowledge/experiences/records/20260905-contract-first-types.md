@@ -6,9 +6,9 @@ timestamp: "2026-09-05T18:02:00Z"
 status: confirmed
 skill_used: ""
 skill_version: ""
-task: "Implement and dogfood contract-guided WikiSkill runs"
+task: "Implement and dogfood contract-guided Wisk runs"
 error_code: ""
-context: "While making RunReading, RunGoal, RunDecision, RunEvidence, RunCheck and RunOutcome exportable before a live run produced them, WikiSkill exposed that okf-parser only exported observed types. The correct fix was upstream: ConceptSpecification plus sibling .schema.sql must define an exportable type even with zero instances. okf-parser PR #248 implemented and verified this behavior."
+context: "While making RunReading, RunGoal, RunDecision, RunEvidence, RunCheck and RunOutcome exportable before a live run produced them, Wisk exposed that okf-parser only exported observed types. The correct fix was upstream: ConceptSpecification plus sibling .schema.sql must define an exportable type even with zero instances. okf-parser PR #248 implemented and verified this behavior."
 ---
 
 # Contract-first types must exist before their first instance

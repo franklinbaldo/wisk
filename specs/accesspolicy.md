@@ -22,4 +22,4 @@ description: "Declares repositories, paths, connectors, and tools a SessionType 
 - `connectors`: Connector/tool families relevant to the session
 - `instructions`: Human-readable access guidance
 
-WikiSkill always exposes the requested policy. Actual coercive enforcement is a capability of the host environment and must not be claimed when unavailable.
+Wisk always exposes the requested policy. Actual coercive enforcement is a capability of the host environment and must not be claimed when unavailable.

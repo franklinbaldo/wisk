@@ -1,12 +1,12 @@
 ---
 type: ConceptSpecification
 concept_type: RuntimeRFC
-description: "Start/check semantics for contract-guided WikiSkill runs."
+description: "Start/check semantics for contract-guided Wisk runs."
 ---
 
 # RFC 0003 — Start/check runtime
 
-WikiSkill should expose a minimal runtime protocol for contract-guided execution:
+Wisk should expose a minimal runtime protocol for contract-guided execution:
 
 ```text
 start(task, run_spec?) -> LoopRun scaffold
@@ -18,9 +18,9 @@ check(run) -> structural diagnostics + unsatisfied RunSpec requirements
 `check` has two layers:
 
 1. delegate structural OKF validation to `okf-parser`;
-2. evaluate WikiSkill-specific completion semantics from the governing `RunSpec` against typed run components already present in the bundle.
+2. evaluate Wisk-specific completion semantics from the governing `RunSpec` against typed run components already present in the bundle.
 
-WikiSkill does not duplicate Markdown parsing, frontmatter validation, link resolution or schema validation. Those remain `okf-parser` responsibilities.
+Wisk does not duplicate Markdown parsing, frontmatter validation, link resolution or schema validation. Those remain `okf-parser` responsibilities.
 
 The semantic layer reports missing reading kinds, goal kinds, evidence kinds, check kinds and outcome state. Those unsatisfied requirements are intended to guide the agent's next action.
 

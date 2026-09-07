@@ -1,9 +1,9 @@
 ---
 type: SessionType
 id: session-types/base
-title: Base WikiSkill session
-purpose: "Operate one auditable contract-guided WikiSkill session."
-run_spec: run-specs/wikiskill-development
+title: Base Wisk session
+purpose: "Operate one auditable contract-guided Wisk session."
+run_spec: run-specs/wisk-development
 output_policy: output-policies/default
 nudges:
   - "Create and maintain a LoopRun as the operational state of this session."
@@ -12,4 +12,4 @@ nudges:
 
 # Base session
 
-Shared defaults for WikiSkill sessions.
+Shared defaults for Wisk sessions.
