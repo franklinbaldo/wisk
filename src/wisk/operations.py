@@ -50,8 +50,13 @@ def start(
     path: str | Path | None = None,
 ) -> dict[str, Any]:
     """Start or resume useful work through RFC 0006's canonical operation."""
-    return runtime(path).start(
+    result = runtime(path).start(
         task,
         session_type=session_type,
         run_spec=run_spec,
     )
+    # Temporary compatibility alias for callers of the pre-RFC 0006 Python/MCP surface.
+    # The canonical operation envelope uses `run`; remove `run_id` after the deprecation window.
+    if result.get("run") is not None:
+        result.setdefault("run_id", result["run"])
+    return result
