@@ -130,12 +130,13 @@ class LiveRunWisk(PinnedWisk):
             raise
 
         self._reload()
-        return {
-            "id": goal_id,
-            "run": run_id,
-            "status": status,
-            "check": self.check_run(run_id),
-        }
+        return self._progress_result(
+            run_id,
+            {
+                "id": goal_id,
+                "status": status,
+            },
+        )
 
     def record_run_decision(
         self,
@@ -335,12 +336,27 @@ class LiveRunWisk(PinnedWisk):
             raise
 
         self._reload()
+        return self._progress_result(
+            run_id,
+            {
+                "id": canonical_id,
+                "path": str(component_path),
+                "run_status": str(updated_run["status"]),
+            },
+        )
+
+    def _progress_result(self, run_id: str, payload: dict[str, Any]) -> dict[str, Any]:
+        """Return mutation provenance plus the canonical post-mutation state envelope."""
+        check = self.check_run(run_id)
+        envelope = self._operation_envelope(
+            check,
+            selection_reason="run-progress",
+            resumed=True,
+        )
         return {
-            "id": canonical_id,
-            "path": str(component_path),
-            "run": run_id,
-            "run_status": str(updated_run["status"]),
-            "check": self.check_run(run_id),
+            **payload,
+            **envelope,
+            "check": check,
         }
 
     @staticmethod
