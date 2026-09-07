@@ -101,7 +101,7 @@ def test_resumed_handoff_requires_environment_then_disposition(tmp_path: Path) -
         evidence="revalidation showed the premise is obsolete",
     )
     assert after_disposition["state"] == "next"
-    assert after_disposition["next"]["kind"] == "goal-state"
+    assert after_disposition["next"]["kind"] == "reading"
 
 
 def test_handoff_creation_records_repository_provenance_fields(tmp_path: Path) -> None:
