@@ -59,9 +59,7 @@ class CadenceWisk(PolicyWisk):
         runs = self._session_runs(session["id"])
         last_run = self._latest_timestamp(runs)
         active_runs = sum(
-            1
-            for run in runs
-            if str(run["frontmatter"].get("status") or "") in _LIVE_STATUSES
+            1 for run in runs if str(run["frontmatter"].get("status") or "") in _LIVE_STATUSES
         )
         runs_last_hour = sum(
             1
