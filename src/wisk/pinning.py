@@ -14,6 +14,7 @@ from wisk.cadence import CadenceWisk
 _LIFECYCLE_CHECK_KINDS = frozenset(
     {"handoff", "goal-state", "handoff-environment", "handoff-disposition"}
 )
+_PRE_RUN_LIFECYCLE_KINDS = frozenset({"handoff-environment", "handoff-disposition"})
 
 
 class PinnedWisk(CadenceWisk):
@@ -132,7 +133,17 @@ class PinnedWisk(CadenceWisk):
         lifecycle = [
             item for item in base["unsatisfied"] if item.get("kind") in _LIFECYCLE_CHECK_KINDS
         ]
-        unsatisfied = [*lifecycle, *self._pinned_unsatisfied(pinned, components)]
+        pre_run_lifecycle = [
+            item for item in lifecycle if item.get("kind") in _PRE_RUN_LIFECYCLE_KINDS
+        ]
+        closing_lifecycle = [
+            item for item in lifecycle if item.get("kind") not in _PRE_RUN_LIFECYCLE_KINDS
+        ]
+        unsatisfied = [
+            *pre_run_lifecycle,
+            *self._pinned_unsatisfied(pinned, components),
+            *closing_lifecycle,
+        ]
         structural = base["structural"]
         conformant = bool(structural["conformant"]) and not unsatisfied
 
