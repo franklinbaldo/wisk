@@ -15,7 +15,9 @@ def _initialized(tmp_path: Path) -> tuple[Path, Wisk]:
     return knowledge, Wisk.open(knowledge)
 
 
-def test_worker_context_excludes_wiki_and_synthesis_context_sees_closed_work(tmp_path: Path) -> None:
+def test_worker_context_excludes_wiki_and_synthesis_sees_closed_work(
+    tmp_path: Path,
+) -> None:
     knowledge, ws = _initialized(tmp_path)
 
     worker = ws.context("Adopt Wisk in this repository", "session-types/standard-work")
@@ -71,7 +73,10 @@ def test_worker_context_excludes_wiki_and_synthesis_context_sees_closed_work(tmp
         run=run,
         component_id="hot-context",
         kind="friction",
-        summary="A later Wiki session could not reconstruct local execution friction unless Work persisted it while context was hot.",
+        summary=(
+            "A later Wiki session could not reconstruct local execution friction unless "
+            "Work persisted it while context was hot."
+        ),
         impact="high",
     )
     runtime.record_run_evidence(
@@ -114,19 +119,27 @@ def test_worker_context_excludes_wiki_and_synthesis_context_sees_closed_work(tmp
     assert "evidence" not in trace["run"]
     assert "checks" not in trace["run"]
 
-    wiki = Wisk.open(knowledge).context("Synthesize adoption traces", "session-types/standard-wiki")
+    wiki = Wisk.open(knowledge).context(
+        "Synthesize adoption traces",
+        "session-types/standard-wiki",
+    )
     assert wiki["active_handoffs"] == []
     assert any(item["id"] == run for item in wiki["recent_work_runs"])
     assert wiki["skills"] == []
     assert wiki["skill_proposals"] == []
 
-    skill = Wisk.open(knowledge).context("Evolve adoption procedure", "session-types/standard-skill")
+    skill = Wisk.open(knowledge).context(
+        "Evolve adoption procedure",
+        "session-types/standard-skill",
+    )
     assert any(item["id"] == run for item in skill["recent_work_runs"])
     assert any(item["id"] == "skill-adopt-wisk-consumer" for item in skill["skills"])
     assert "skill_proposals" in skill
 
 
-def test_skill_use_rejects_version_or_status_that_does_not_match_skill(tmp_path: Path) -> None:
+def test_skill_use_rejects_version_or_status_that_does_not_match_skill(
+    tmp_path: Path,
+) -> None:
     knowledge, ws = _initialized(tmp_path)
     started = ws.start_run(
         "Exercise skill provenance",
