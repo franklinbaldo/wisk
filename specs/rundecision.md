@@ -21,8 +21,11 @@ A `RunDecision` records a meaningful choice that changes how the run proceeds.
 
 - `goal`: Link to the `RunGoal` advanced by the decision
 - `alternatives`: Other options materially considered
-- `evidence`: Links to supporting `RunEvidence`
 
 ## Semantics
 
 The purpose is not to log every thought. Record decisions that affect architecture, scope, interpretation, prioritization, validation, or the next state of the run.
+
+A decision is recorded before the evidence that supports it exists, and run
+components are append-only, so the link lives on `RunEvidence.decision`: later
+evidence declares which decision it bears on.

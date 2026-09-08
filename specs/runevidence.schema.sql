@@ -5,5 +5,6 @@ CREATE TABLE "RunEvidence" (
     "reference" VARCHAR,
     "summary" VARCHAR,
     "goal" VARCHAR,
+    "decision" VARCHAR,
     "observed_at" TIMESTAMPTZ
 );

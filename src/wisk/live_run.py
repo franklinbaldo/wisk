@@ -140,7 +140,6 @@ class LiveRunWisk(PinnedWisk):
         rationale: str,
         goal: str | None = None,
         alternatives: list[str] | None = None,
-        evidence: list[str] | None = None,
     ) -> dict[str, Any]:
         """Record one consequential decision made during a live run."""
         return self._record_run_component(
@@ -153,7 +152,6 @@ class LiveRunWisk(PinnedWisk):
                 "rationale": rationale,
                 "goal": goal,
                 "alternatives": alternatives,
-                "evidence": evidence,
             },
         )
 
@@ -166,6 +164,7 @@ class LiveRunWisk(PinnedWisk):
         reference: str,
         summary: str,
         goal: str | None = None,
+        decision: str | None = None,
         observed_at: str | None = None,
     ) -> dict[str, Any]:
         """Record one concrete item of evidence for a live run."""
@@ -178,6 +177,7 @@ class LiveRunWisk(PinnedWisk):
                 "reference": reference,
                 "summary": summary,
                 "goal": goal,
+                "decision": decision,
                 "observed_at": observed_at,
             },
         )
@@ -219,6 +219,8 @@ class LiveRunWisk(PinnedWisk):
         work_status: str,
         summary: str,
         next_move: str,
+        evidence: list[str] | None = None,
+        checks: list[str] | None = None,
     ) -> dict[str, Any]:
         """Close one run round with its coherent state and natural continuation."""
         self._require_enum("work_status", work_status, _WORK_STATUSES)
@@ -242,6 +244,8 @@ class LiveRunWisk(PinnedWisk):
                 "work_status": work_status,
                 "summary": summary,
                 "next_move": next_move,
+                "evidence": evidence,
+                "checks": checks,
             },
         )
 
