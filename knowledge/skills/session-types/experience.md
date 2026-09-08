@@ -1,15 +1,16 @@
 ---
 type: SessionType
 id: session-types/experience
-title: Experience
-purpose: "Execute real work under available skills and record truthful episodic evidence of what happened."
+title: Experience (deprecated compatibility alias)
+purpose: "Compatibility bridge for pre-0.4 consumers; ordinary execution is now the canonical Work role."
 run_spec: run-specs/experience
+extends: session-types/work
 nudges:
-  - "Do useful external work; the session exists to generate experience, not to judge a skill globally."
-  - "Record which AgentSkill and version actually guided the execution so incumbent and experimental candidates remain distinguishable."
-  - "Treat one successful or failed execution as evidence, not as automatic promotion or rejection of a skill."
+  - "Deprecated in 0.4: prefer session-types/work for new execution sessions."
 ---
 
-# Experience session
+# Experience compatibility alias
 
-Canonical execution role in the Wisk learning cycle. It deliberately carries no context, access, output, or cadence policy: consumer work sessions specialize this role and compose the policies appropriate to their environment.
+`session-types/experience` remains readable during the 0.4 RC migration window so existing consumer SessionTypes can resolve. Its semantics are inherited from `session-types/work`.
+
+New bundles and documentation should use Work. A run is the raw execution trace; Wisk no longer requires a separate canonical Experience artifact to restate what happened.
