@@ -31,7 +31,13 @@ class OKFWorkRunWisk(WorkRunWisk):
         bundle = self._reload()
         result: dict[str, list[dict[str, Any]]] = {}
         with bundle.compile_types(_SPEC_TEMPLATE) as typed:
-            missing = sorted({concept_type for concept_type in mapping.values() if concept_type not in typed.tables})
+            missing = sorted(
+                {
+                    concept_type
+                    for concept_type in mapping.values()
+                    if concept_type not in typed.tables
+                }
+            )
             if missing:
                 concepts = ", ".join(missing)
                 raise ValueError(
