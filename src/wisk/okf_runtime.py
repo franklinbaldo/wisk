@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import math
+from collections.abc import Iterable
 from pathlib import Path
 from typing import Any
 
@@ -29,22 +30,16 @@ class OKFWorkRunWisk(WorkRunWisk):
     ) -> dict[str, list[dict[str, Any]]]:
         """Materialize every Raw child through declared okf-parser relations."""
         bundle = self._reload()
+        self._require_declared_schemas(mapping.values())
         result: dict[str, list[dict[str, Any]]] = {}
         with bundle.compile_types(_SPEC_TEMPLATE) as typed:
-            missing = sorted(
-                {
-                    concept_type
-                    for concept_type in mapping.values()
-                    if concept_type not in typed.tables
-                }
-            )
-            if missing:
-                concepts = ", ".join(missing)
-                raise ValueError(
-                    "Raw trace types require declared .schema.sql contracts; "
-                    f"missing from okf-parser TypedRelations: {concepts}"
-                )
             for name, concept_type in mapping.items():
+                if concept_type not in typed.tables:
+                    # okf-parser materializes a relation once the bundle holds an instance.
+                    # A declared type the run never exercised is simply an empty collection:
+                    # a Work run with no explicit decision is well-formed, not broken.
+                    result[name] = []
+                    continue
                 relation = typed[concept_type]
                 if "run" not in relation.columns:
                     raise ValueError(
@@ -64,6 +59,23 @@ class OKFWorkRunWisk(WorkRunWisk):
                     records.append(frontmatter)
                 result[name] = records
         return result
+
+    def _require_declared_schemas(self, concept_types: Iterable[str]) -> None:
+        """Every Raw trace type must ship a .schema.sql contract beside its specification."""
+        specs = self.root_path.parent / "specs"
+        missing = sorted(
+            {
+                concept_type
+                for concept_type in concept_types
+                if not (specs / f"{concept_type.lower()}.schema.sql").is_file()
+            }
+        )
+        if missing:
+            concepts = ", ".join(missing)
+            raise ValueError(
+                "Raw trace types require declared .schema.sql contracts; "
+                f"missing from {specs}: {concepts}"
+            )
 
     def _apply_record_fields(
         self,
