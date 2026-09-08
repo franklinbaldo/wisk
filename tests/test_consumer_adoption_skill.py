@@ -19,19 +19,23 @@ def test_bootstrap_installs_consumer_adoption_skill_with_role_boundaries(tmp_pat
     )
     assert paper_title in text
     assert "https://arxiv.org/abs/2608.27454" in text
-    assert "Experience" in text and "truthful raw episodic evidence" in text
-    assert "Wiki" in text and "synthesizes durable knowledge" in text
-    assert "Skill" in text and "AgentSkill procedure" in text
+    assert "Work / Worker" in text and "Raw Layer" in text
+    assert "Wiki / Wiki Maintainer" in text and "consolidates recurrence" in text
+    assert "Skill / Skill Evolver" in text and "atomic procedural intervention" in text
     assert "Never put instructions" in text
 
 
-def test_standard_experience_explicitly_forbids_wiki_or_skill_synthesis(tmp_path: Path) -> None:
+def test_standard_work_leaves_synthesis_to_wiki(tmp_path: Path) -> None:
+    """The Worker records the raw trace; it must not be told to synthesize knowledge."""
     init_repository(tmp_path)
 
-    session = (
-        tmp_path / ".wisk/knowledge/system/profiles/standard/session-types/standard-experience.md"
-    ).read_text(encoding="utf-8")
+    root = tmp_path / ".wisk/knowledge/system/profiles/standard/session-types"
+    session = (root / "standard-work.md").read_text(encoding="utf-8")
 
-    assert "truthful raw episodic evidence" in session
-    assert "do not synthesize it into WikiEntry or evolve AgentSkill" in session
-    assert "Wiki owns synthesis and Skill owns procedural change" in session
+    assert "leave cross-run synthesis to Wiki" in session
+    assert "RunSkillUse" not in session or "skill/version actually used" in session
+    assert "WikiEntry" not in session
+
+    alias = (root / "standard-experience.md").read_text(encoding="utf-8")
+    assert "deprecated compatibility alias" in alias.lower()
+    assert "session-types/standard-work" in alias

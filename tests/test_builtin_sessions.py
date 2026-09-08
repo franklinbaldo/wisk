@@ -32,7 +32,7 @@ def test_builtin_session_types_declare_canonical_learning_roles() -> None:
 def test_legacy_learning_names_specialize_canonical_roles() -> None:
     ws = Wisk.open(ROOT / "knowledge")
     assert ws.effective_session_type("session-types/inference")["inheritance"] == [
-        "session-types/experience",
+        "session-types/work",
         "session-types/inference",
     ]
     assert ws.effective_session_type("session-types/wiki-maintainer")["inheritance"] == [
@@ -48,7 +48,7 @@ def test_legacy_learning_names_specialize_canonical_roles() -> None:
 def test_canonical_roles_are_policy_neutral() -> None:
     ws = Wisk.open(ROOT / "knowledge")
     for session_type in (
-        "session-types/experience",
+        "session-types/work",
         "session-types/wiki",
         "session-types/skill",
     ):

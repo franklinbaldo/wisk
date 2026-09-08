@@ -101,3 +101,29 @@ def test_migrate_bundle_reports_before_it_writes_and_preserves_legacy_experience
     assert legacy_experience.read_text(encoding="utf-8") == _LEGACY_EXPERIENCE
 
     assert migrate_bundle(tmp_path)["documents"] == 0
+
+
+def test_migrate_retargets_a_handoff_away_from_a_pre_04_alias() -> None:
+    """An alias target is never auto-selected, so an unmigrated handoff would be stranded."""
+    handoff = (
+        '---\ntype: "Handoff"\nid: "handoffs/resume"\nstatus: "active"\n'
+        'target_session_type: "session-types/standard-experience"\n---\n\n# Handoff\n'
+    )
+
+    migrated, changes = migrate_document(handoff)
+
+    assert changes == {"retargeted:session-types/standard-work"}
+    assert 'target_session_type: "session-types/standard-work"' in migrated
+    assert "standard-experience" not in migrated
+
+
+def test_migrate_leaves_an_unrecognized_handoff_target_alone() -> None:
+    handoff = (
+        '---\ntype: "Handoff"\nid: "handoffs/local"\nstatus: "active"\n'
+        'target_session_type: "session-types/judicial-work"\n---\n\n# Handoff\n'
+    )
+
+    migrated, changes = migrate_document(handoff)
+
+    assert changes == set()
+    assert migrated == handoff

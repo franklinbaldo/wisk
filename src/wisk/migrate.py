@@ -31,6 +31,14 @@ REMOVED_KEYS: dict[str, frozenset[str]] = {
     "RunSpec": frozenset({"allowed_entry_states"}),
 }
 
+# Pre-0.4 aliases are no longer auto-selected, so an active Handoff still targeting one
+# would never be continued. Retarget it at the Work specialization that replaces it.
+RETARGETED_SESSION_TYPES = {
+    "session-types/experience": "session-types/work",
+    "session-types/standard-experience": "session-types/standard-work",
+    "session-types/inference": "session-types/work",
+}
+
 _FRONTMATTER = re.compile(r"\A---\n(.*?)\n---\n(.*)\Z", re.DOTALL)
 _KEY = re.compile(r"^([A-Za-z_][A-Za-z0-9_]*):")
 
@@ -93,6 +101,24 @@ def _add_started_at(frontmatter_lines: list[str]) -> tuple[list[str], bool]:
     return result, inserted
 
 
+def _retarget_handoff(frontmatter_lines: list[str]) -> tuple[list[str], str | None]:
+    """Point an active Handoff at the Work session type that replaces its 0.3.x target."""
+    if _document_type(frontmatter_lines) != "Handoff":
+        return frontmatter_lines, None
+    current = _scalar(frontmatter_lines, "target_session_type")
+    if current is None:
+        return frontmatter_lines, None
+    replacement = RETARGETED_SESSION_TYPES.get(current.strip().strip('"').strip("'"))
+    if replacement is None:
+        return frontmatter_lines, None
+
+    result = [
+        f'target_session_type: "{replacement}"' if line.startswith("target_session_type:") else line
+        for line in frontmatter_lines
+    ]
+    return result, replacement
+
+
 def migrate_document(content: str) -> tuple[str, set[str]]:
     """Return one document migrated toward 0.4rc1 plus the transformations applied."""
     match = _FRONTMATTER.match(content)
@@ -103,9 +129,12 @@ def migrate_document(content: str) -> tuple[str, set[str]]:
     removed = REMOVED_KEYS.get(document_type, frozenset())
     kept, dropped = _strip_keys(frontmatter_lines, removed)
     kept, added_start = _add_started_at(kept)
+    kept, retargeted = _retarget_handoff(kept)
     changes = {f"dropped:{key}" for key in dropped}
     if added_start:
         changes.add("added:started_at")
+    if retargeted:
+        changes.add(f"retargeted:{retargeted}")
     if not changes:
         return content, set()
     return "---\n" + "\n".join(kept) + "\n---\n" + match.group(2), changes

@@ -77,14 +77,60 @@ def _write_judicial_local_bundle(repository: Path) -> Path:
     return repository / ".wisk/knowledge"
 
 
-def _record_experiences(knowledge: Path, count: int) -> None:
+def _close_work_runs(knowledge: Path, count: int) -> None:
+    """Accumulate closed Work traces, which is what makes Wiki synthesis eligible."""
     for index in range(count):
-        Wisk.open(knowledge).record_experience(
-            experience_id=f"judicial-exp-{index}",
-            title=f"Judicial experience {index}",
-            timestamp=f"2026-09-06T1{index}:00:00+00:00",
-            status="success",
-            body=f"# Experience {index}\n\nObserved useful Judicial work {index}.",
+        run = str(
+            Wisk.open(knowledge).start(
+                f"Judicial work {index}",
+                session_type="session-types/standard-work",
+            )["run"]
+        )
+        runtime = Wisk.open(knowledge)
+        for kind, reference, finding in (
+            ("active-handoffs", "wisk:handoffs", "No prior operational responsibility."),
+            ("active-skills", "skill-adopt-wisk-consumer", "The adoption skill applies."),
+        ):
+            runtime.record_run_reading(
+                run=run,
+                component_id=kind,
+                kind=kind,
+                subject=kind,
+                reference=reference,
+                finding=finding,
+            )
+        goal = runtime.record_run_goal(
+            run=run,
+            component_id="task-advance",
+            kind="task-advance",
+            goal=f"Advance judicial work {index}.",
+            rationale="The consumer needs accumulated raw traces before synthesis.",
+            success_signal="The trace closes with verified execution evidence.",
+        )
+        runtime.record_run_evidence(
+            run=run,
+            component_id="execution",
+            kind="execution",
+            reference=f"judicial-work-{index}",
+            summary=f"Observed useful Judicial work {index}.",
+            goal=str(goal["id"]),
+        )
+        runtime.record_run_check(
+            run=run,
+            component_id="verification",
+            kind="verification",
+            procedure="Confirm the observed effect against execution evidence.",
+            result="Evidence supports the claimed effect.",
+            status="pass",
+        )
+        runtime.update_run_goal_status(run=run, goal=str(goal["id"]), status="achieved")
+        runtime.record_run_outcome(
+            run=run,
+            component_id="complete",
+            result_state="success",
+            work_status="complete",
+            summary=f"Judicial work {index} is complete.",
+            next_move="A later Wiki session may compare this trace with the others.",
         )
 
 
@@ -119,7 +165,7 @@ def test_judicial_consumer_uses_canonical_wiki_then_local_skill(
 ) -> None:
     knowledge = _write_judicial_local_bundle(tmp_path)
     init_repository(tmp_path)
-    _record_experiences(knowledge, 6)
+    _close_work_runs(knowledge, 6)
 
     first_due = Wisk.open(knowledge).next_session()
     assert first_due is not None
