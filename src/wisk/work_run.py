@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+import math
+from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any
 
@@ -168,11 +169,22 @@ class WorkRunWisk(LiveRunWisk):
         return result
 
     def run_trace(self, run: str) -> dict[str, Any]:
-        """Reconstruct one persisted execution trace from child-owned membership links."""
+        """Reconstruct a Work trace through okf-parser's declared typed relations."""
         record = self._find_record("LoopRun", run)
         frontmatter = dict(record["frontmatter"])
         run_id = str(frontmatter.get("id") or record["id"])
-        mapping = {
+        components = self._typed_trace_components(self._trace_mapping(), run_id)
+        return {
+            "id": run_id,
+            "path": record["path"],
+            "run": frontmatter,
+            "duration_seconds": self._duration_seconds(frontmatter),
+            **components,
+        }
+
+    def _trace_mapping(self) -> dict[str, str]:
+        """Return Raw Layer child collections materialized in one typed trace snapshot."""
+        return {
             "readings": "RunReading",
             "goals": "RunGoal",
             "decisions": "RunDecision",
@@ -182,17 +194,64 @@ class WorkRunWisk(LiveRunWisk):
             "skill_uses": "RunSkillUse",
             "outcomes": "RunOutcome",
         }
-        components = {
-            name: [dict(item["frontmatter"]) for item in self._run_components(concept_type, run_id)]
-            for name, concept_type in mapping.items()
-        }
-        return {
-            "id": run_id,
-            "path": record["path"],
-            "run": frontmatter,
-            "duration_seconds": self._duration_seconds(frontmatter),
-            **components,
-        }
+
+    def _typed_trace_components(
+        self,
+        mapping: dict[str, str],
+        run_id: str,
+    ) -> dict[str, list[dict[str, Any]]]:
+        """Read declared Run* values through okf-parser instead of raw YAML strings."""
+        bundle = self._reload()
+        result: dict[str, list[dict[str, Any]]] = {}
+        with bundle.compile_types("../specs/{slug}.md") as typed:
+            for name, concept_type in mapping.items():
+                if concept_type not in typed.tables:
+                    result[name] = [
+                        dict(item["frontmatter"])
+                        for item in self._run_components(concept_type, run_id)
+                    ]
+                    continue
+                relation = typed[concept_type]
+                if "run" not in relation.columns:
+                    result[name] = []
+                    continue
+                frame = relation.filter(relation["run"] == run_id).execute()
+                records: list[dict[str, Any]] = []
+                for _, row in frame.iterrows():
+                    frontmatter: dict[str, Any] = {}
+                    for column in frame.columns:
+                        key = str(column)
+                        if key.startswith("__okf_"):
+                            continue
+                        value = self._runtime_value(row[column])
+                        if value is not None:
+                            frontmatter[key] = value
+                    records.append(frontmatter)
+                result[name] = records
+        return result
+
+    @classmethod
+    def _runtime_value(cls, value: Any) -> Any:
+        """Keep parser types while making temporal/scalar values JSON-boundary friendly."""
+        if value is None or type(value).__name__ in {"NAType", "NaTType"}:
+            return None
+        if isinstance(value, datetime):
+            return value.isoformat().replace("+00:00", "Z")
+        if isinstance(value, date):
+            return value.isoformat()
+        if isinstance(value, float) and math.isnan(value):
+            return None
+        if isinstance(value, list):
+            return [cls._runtime_value(item) for item in value]
+        if isinstance(value, tuple):
+            return [cls._runtime_value(item) for item in value]
+        item = getattr(value, "item", None)
+        if callable(item):
+            try:
+                return cls._runtime_value(item())
+            except (TypeError, ValueError):
+                pass
+        return value
 
     def check_run(self, run_id_or_path: str) -> dict[str, Any]:
         """Preserve RunSpec semantics while exposing the complete Raw Layer component counts."""
