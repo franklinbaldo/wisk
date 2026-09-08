@@ -37,11 +37,12 @@ def _git(*args: str) -> str:
 
 
 def parse_semver(ver: str) -> tuple[int, int, int]:
-    parts = ver.split(".", 2)
-    if len(parts) != 3:
-        msg = f"Invalid SemVer: {ver}"
+    """Return the release tuple for X.Y.Z and PEP 440 pre-releases such as X.Y.Zrc1."""
+    match = re.fullmatch(r"(\d+)\.(\d+)\.(\d+)(?:(?:a|b|rc)\d+)?", ver)
+    if not match:
+        msg = f"Invalid release version: {ver}"
         raise ValueError(msg)
-    return (int(parts[0]), int(parts[1]), int(parts[2]))
+    return tuple(int(part) for part in match.groups())
 
 
 def get_base_version(base_ref: str = "origin/main") -> str | None:
@@ -126,7 +127,9 @@ def check_version_and_changelog() -> bool:
         for card in matching_cards:
             console.print(f"   + {card.relative_to(ROOT)}")
 
-    # Check SemVer transition against base branch if available
+    # Check release transition against base branch if available. Pre-release suffixes
+    # do not change the release tuple used to decide whether a breaking diff is only
+    # a patch bump.
     base_version = get_base_version("origin/main")
     if base_version and base_version != version:
         try:
@@ -146,7 +149,7 @@ def check_version_and_changelog() -> bool:
                     msg = f"! Non-patch bump ({base_version} -> {version}) accepted"
                     console.print(f"[bold yellow]{msg}[/bold yellow]")
         except Exception as exc:
-            console.print(f"[yellow]Warning during semver diff comparison: {exc}[/yellow]")
+            console.print(f"[yellow]Warning during version diff comparison: {exc}[/yellow]")
 
     if errors:
         console.print("[bold red]Errors detected:[/bold red]")
