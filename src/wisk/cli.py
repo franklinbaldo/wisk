@@ -20,7 +20,10 @@ app = cyclopts.App(
     version=__version__,
 )
 experience_app = app.command(
-    cyclopts.App(name="experience", help="Preview and record episodic Experience evidence.")
+    cyclopts.App(
+        name="experience",
+        help="Legacy 0.3.x Experience compatibility operations; new Work uses LoopRun traces.",
+    )
 )
 handoff_app = app.command(
     cyclopts.App(name="handoff", help="Create, list, and continue cross-session Handoffs.")
@@ -29,7 +32,7 @@ session_app = app.command(
     cyclopts.App(name="session", help="Inspect scheduling and start eligible SessionTypes.")
 )
 run_app = app.command(
-    cyclopts.App(name="run", help="Record typed state while progressing a live LoopRun.")
+    cyclopts.App(name="run", help="Record and inspect typed state in a Work LoopRun trace.")
 )
 
 
@@ -61,7 +64,7 @@ def upgrade(repository: str = ".") -> None:
 
 @app.command(name="migrate")
 def migrate_command(path: str = "knowledge", *, apply: bool = False) -> None:
-    """Drop the frontmatter keys 0.4.0 removed from a 0.3.x knowledge bundle."""
+    """Inspect/apply the conservative 0.3.x -> 0.4 RC Work-trace migration."""
     _print_json(migrate_bundle(path, apply=apply))
 
 
@@ -80,9 +83,10 @@ def context(
     session_type: str | None = None,
     path: str | None = None,
 ) -> None:
-    """Show contract and learned context for a given agent task."""
+    """Show role-curated contract and learned context for an agent task."""
     res = _wiki(path).context(task, session_type)
     print(f"--- Context for: {task} ---")
+    print(f"SessionType: {res.get('session_type')}")
     print(f"Active handoffs ({len(res['active_handoffs'])}):")
     for handoff in res["active_handoffs"]:
         print(f"  - [{handoff['id']}] {handoff['title']} -> {handoff['next_action']}")
@@ -95,6 +99,14 @@ def context(
     print(f"Wiki knowledge found ({len(res['wiki'])}):")
     for wiki in res["wiki"]:
         print(f"  - [{wiki['id']}] {wiki['title']}")
+    work_runs = list(res.get("recent_work_runs", []))
+    print(f"Closed Work traces found ({len(work_runs)}):")
+    for run in work_runs:
+        print(f"  - [{run['id']}] {run['title']}")
+    proposals = list(res.get("skill_proposals", []))
+    print(f"Skill proposals found ({len(proposals)}):")
+    for proposal in proposals:
+        print(f"  - [{proposal['id']}] {proposal['title']}")
 
 
 @app.command
@@ -151,6 +163,12 @@ def session_next(*, path: str | None = None) -> None:
 def session_start_next(task: str, *, path: str | None = None) -> None:
     """Compatibility alias for the pre-RFC 0006 start-next entrypoint."""
     _print_json(start_operation(task, path=path))
+
+
+@run_app.command(name="trace")
+def run_trace(run: str, *, path: str | None = None) -> None:
+    """Reconstruct one Work Raw Layer trace from child-owned run links."""
+    _print_json(_wiki(path).run_trace(run))
 
 
 @run_app.command(name="reading")
@@ -267,6 +285,58 @@ def run_evidence(
     )
 
 
+@run_app.command(name="observation")
+def run_observation(
+    run: str,
+    component_id: str,
+    kind: str,
+    summary: str,
+    impact: str,
+    *,
+    path: str | None = None,
+    observed_at: str | None = None,
+    skill_use: str | None = None,
+) -> None:
+    """Record friction, surprise, near-miss, workaround, opportunity, or skill feedback."""
+    _print_json(
+        _wiki(path).record_run_observation(
+            run=run,
+            component_id=component_id,
+            kind=kind,
+            summary=summary,
+            impact=impact,
+            observed_at=observed_at,
+            skill_use=skill_use,
+        )
+    )
+
+
+@run_app.command(name="skill-use")
+def run_skill_use(
+    run: str,
+    component_id: str,
+    skill: str,
+    skill_version: str,
+    skill_status: str,
+    *,
+    path: str | None = None,
+    observed_at: str | None = None,
+    notes: str | None = None,
+) -> None:
+    """Record the exact AgentSkill version that actually guided a Work run."""
+    _print_json(
+        _wiki(path).record_run_skill_use(
+            run=run,
+            component_id=component_id,
+            skill=skill,
+            skill_version=skill_version,
+            skill_status=skill_status,
+            observed_at=observed_at,
+            notes=notes,
+        )
+    )
+
+
 @run_app.command(name="check")
 def run_check_record(
     run: str,
@@ -308,7 +378,7 @@ def run_outcome(
     *,
     path: str | None = None,
 ) -> None:
-    """Record the RunOutcome that closes a contract-ready run."""
+    """Record the RunOutcome that closes a contract-ready run and timestamps completion."""
     _print_json(
         _wiki(path).record_run_outcome(
             run=run,
@@ -389,7 +459,7 @@ def experience_preview(
     context: str | None = None,
     run: str | None = None,
 ) -> None:
-    """Preview an Experience document without changing the bundle."""
+    """Preview a legacy Experience document without changing the bundle."""
     result = _wiki(path).preview_experience(
         experience_id=experience_id,
         title=title,
@@ -422,7 +492,11 @@ def experience_record(
     context: str | None = None,
     run: str | None = None,
 ) -> None:
-    """Persist one validated Experience document into the bundle."""
+    """Persist one legacy Experience document during the 0.4 RC migration window."""
+    print(
+        "Deprecated in 0.4: new Work sessions should use the LoopRun trace and RunSkillUse.",
+        file=sys.stderr,
+    )
     result = _wiki(path).record_experience(
         experience_id=experience_id,
         title=title,
@@ -436,7 +510,7 @@ def experience_record(
         context=context,
         run=run,
     )
-    print(f"Recorded Experience {result['id']} -> {result['path']}")
+    print(f"Recorded legacy Experience {result['id']} -> {result['path']}")
 
 
 def main() -> None:
