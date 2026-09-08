@@ -35,8 +35,8 @@ def wisk_inventory(path: str | None = None) -> dict[str, int]:
 @mcp.tool(
     name="wisk_context",
     description=(
-        "Retrieve task-relevant RunSpecs, active handoffs, skills, wiki knowledge, and recent "
-        "experiences for contract-guided agent execution."
+        "Retrieve role-curated RunSpecs, handoffs, skills, Wiki knowledge, Work traces, "
+        "and proposal history for contract-guided execution."
     ),
     annotations={"readOnlyHint": True},
 )
@@ -100,6 +100,18 @@ def wisk_start_legacy(
 )
 def wisk_check(run: str, path: str | None = None) -> dict[str, Any]:
     return _get_runtime(path).check_run(run)
+
+
+@mcp.tool(
+    name="wisk_run_trace",
+    description=(
+        "Reconstruct one repository-resident Work Raw Layer trace from the LoopRun and all "
+        "typed child records that point to it."
+    ),
+    annotations={"readOnlyHint": True},
+)
+def wisk_run_trace(run: str, path: str | None = None) -> dict[str, Any]:
+    return _get_runtime(path).run_trace(run)
 
 
 @mcp.tool(
@@ -253,6 +265,61 @@ def wisk_run_evidence(
 
 
 @mcp.tool(
+    name="wisk_run_observation",
+    description=(
+        "Record raw execution texture such as friction, surprise, near-miss, workaround, "
+        "opportunity, or local skill feedback."
+    ),
+    annotations=_WRITE_ANNOTATIONS,
+)
+def wisk_run_observation(
+    run: str,
+    component_id: str,
+    kind: str,
+    summary: str,
+    impact: str,
+    observed_at: str | None = None,
+    skill_use: str | None = None,
+    path: str | None = None,
+) -> dict[str, Any]:
+    return _get_runtime(path).record_run_observation(
+        run=run,
+        component_id=component_id,
+        kind=kind,
+        summary=summary,
+        impact=impact,
+        observed_at=observed_at,
+        skill_use=skill_use,
+    )
+
+
+@mcp.tool(
+    name="wisk_run_skill_use",
+    description="Record the exact AgentSkill version and lifecycle state that guided one Work run.",
+    annotations=_WRITE_ANNOTATIONS,
+)
+def wisk_run_skill_use(
+    run: str,
+    component_id: str,
+    skill: str,
+    skill_version: str,
+    skill_status: str,
+    observed_at: str | None = None,
+    notes: str | None = None,
+    path: str | None = None,
+) -> dict[str, Any]:
+    return _get_runtime(path).record_run_skill_use(
+        run=run,
+        component_id=component_id,
+        skill=skill,
+        skill_version=skill_version,
+        skill_status=skill_status,
+        observed_at=observed_at,
+        notes=notes,
+    )
+
+
+@mcp.tool(
     name="wisk_run_check_record",
     description="Record a typed RunCheck and return the newly derived next state.",
     annotations=_WRITE_ANNOTATIONS,
@@ -284,7 +351,7 @@ def wisk_run_check_record(
 
 @mcp.tool(
     name="wisk_run_outcome",
-    description="Record the RunOutcome that closes a contract-ready LoopRun.",
+    description="Record the RunOutcome that closes a contract-ready LoopRun and timestamps finish.",
     annotations=_WRITE_ANNOTATIONS,
 )
 def wisk_run_outcome(
@@ -366,7 +433,7 @@ def wisk_handoff_continue(
 
 @mcp.tool(
     name="wisk_experience_preview",
-    description="Preview an OKF Experience document without writing it to the bundle.",
+    description="Preview a legacy 0.3.x OKF Experience document without writing it.",
     annotations={
         "readOnlyHint": True,
         "destructiveHint": False,
@@ -405,7 +472,10 @@ def wisk_experience_preview(
 
 @mcp.tool(
     name="wisk_experience_record",
-    description="Write one validated OKF Experience document to the Wisk bundle.",
+    description=(
+        "Compatibility write for one legacy Experience document. New Work sessions should "
+        "persist the LoopRun trace and RunSkillUse instead."
+    ),
     annotations=_WRITE_ANNOTATIONS,
 )
 def wisk_experience_record(
