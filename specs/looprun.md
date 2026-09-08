@@ -33,19 +33,11 @@ New LoopRuns freeze the complete RunSpec frontmatter that governed the run at cr
 
 `check_run()` validates a pinned run against this snapshot rather than the mutable current RunSpec. The digest and version make tampering or accidental divergence explicit. Legacy LoopRuns that predate pinning may omit these fields and continue to resolve their current `run_spec` reference as a compatibility fallback.
 
-## Progressive Frontmatter Fields
+## Run components
 
-These fields are expected to be populated as the run advances according to its `RunSpec`:
+A LoopRun stores no lists of its own components. Every `RunReading`, `RunGoal`, `RunDecision`, `RunEvidence`, `RunCheck`, `RunOutcome`, and `Experience` carries a `run` link back to the LoopRun, and the runtime derives a run's components from those links.
 
-- `readings`: Links to `RunReading`
-- `goals`: Links to `RunGoal`
-- `decisions`: Links to `RunDecision`
-- `evidence`: Links to `RunEvidence`
-- `checks`: Links to `RunCheck`
-- `outcome`: Link to `RunOutcome`
-- `skills_consulted`: Links to `AgentSkill`
-- `experiences_recorded`: Links to `Experience`
-- `proposals_generated`: Links to `SkillProposal`
+The single source of truth is the child record. `status` alone reports how far the run has progressed: `scaffold` before any component exists, `in_progress` while components accumulate, `closed` once a `RunOutcome` has been written for the run.
 
 ## Operational semantics
 

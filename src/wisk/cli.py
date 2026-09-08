@@ -246,7 +246,6 @@ def run_evidence(
     *,
     path: str | None = None,
     goal: str | None = None,
-    decision: str | None = None,
     observed_at: str | None = None,
 ) -> None:
     """Record one RunEvidence."""
@@ -258,7 +257,6 @@ def run_evidence(
             reference=reference,
             summary=summary,
             goal=goal,
-            decision=decision,
             observed_at=observed_at,
         )
     )
@@ -302,10 +300,6 @@ def run_outcome(
     next_move: str,
     *,
     path: str | None = None,
-    goals_advanced: list[str] | None = None,
-    evidence: list[str] | None = None,
-    checks: list[str] | None = None,
-    experiences_recorded: list[str] | None = None,
 ) -> None:
     """Record the RunOutcome that closes a contract-ready run."""
     _print_json(
@@ -316,10 +310,6 @@ def run_outcome(
             work_status=work_status,
             summary=summary,
             next_move=next_move,
-            goals_advanced=goals_advanced,
-            evidence=evidence,
-            checks=checks,
-            experiences_recorded=experiences_recorded,
         )
     )
 

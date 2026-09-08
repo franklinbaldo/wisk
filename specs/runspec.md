@@ -24,7 +24,6 @@ A `RunSpec` defines the operational protocol for a class of agent executions. A 
 
 - `skill`: Link to the `AgentSkill` this spec operationalizes
 - `parent_spec`: Link to a more general `RunSpec`
-- `allowed_entry_states`: Domain-specific entry states
 - `allowed_result_states`: Domain-specific result states
 - `completion_notes`: Additional semantic completion guidance
 

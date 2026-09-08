@@ -1,4 +1,4 @@
-﻿CREATE TABLE "Changelog" (
+CREATE TABLE "Changelog" (
     "version" VARCHAR,
     "date" VARCHAR
 );

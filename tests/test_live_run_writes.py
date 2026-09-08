@@ -52,7 +52,7 @@ def test_typed_writes_drive_run_from_scaffold_to_closed(tmp_path: Path) -> None:
         success_signal="the pinned RunSpec becomes conformant through runtime calls",
         status="achieved",
     )
-    decision = ws.record_run_decision(
+    ws.record_run_decision(
         run=run_id,
         component_id="typed-service-layer",
         question="How should live run state be persisted?",
@@ -61,14 +61,13 @@ def test_typed_writes_drive_run_from_scaffold_to_closed(tmp_path: Path) -> None:
         goal=goal["id"],
         alternatives=["hand-write Markdown"],
     )
-    change = ws.record_run_evidence(
+    ws.record_run_evidence(
         run=run_id,
         component_id="change",
         kind="change",
         reference="src/wisk/live_run.py",
         summary="typed component writer persists and attaches run state",
         goal=goal["id"],
-        decision=decision["id"],
     )
     verification = ws.record_run_evidence(
         run=run_id,
@@ -77,9 +76,8 @@ def test_typed_writes_drive_run_from_scaffold_to_closed(tmp_path: Path) -> None:
         reference="tests/test_live_run_writes.py",
         summary="integration test exercises the complete contract",
         goal=goal["id"],
-        decision=decision["id"],
     )
-    okf_check = ws.record_run_check(
+    ws.record_run_check(
         run=run_id,
         component_id="okf",
         kind="okf",
@@ -89,7 +87,7 @@ def test_typed_writes_drive_run_from_scaffold_to_closed(tmp_path: Path) -> None:
         evidence=verification["id"],
         goal=goal["id"],
     )
-    tests_check = ws.record_run_check(
+    ws.record_run_check(
         run=run_id,
         component_id="tests",
         kind="tests",
@@ -106,9 +104,6 @@ def test_typed_writes_drive_run_from_scaffold_to_closed(tmp_path: Path) -> None:
         work_status="complete",
         summary="the run was completed using only typed runtime writes",
         next_move="expose these writes through CLI and MCP",
-        goals_advanced=[goal["id"]],
-        evidence=[change["id"], verification["id"]],
-        checks=[okf_check["id"], tests_check["id"]],
     )
 
     assert outcome["run_status"] == "closed"
@@ -118,12 +113,11 @@ def test_typed_writes_drive_run_from_scaffold_to_closed(tmp_path: Path) -> None:
     run = Wisk.open(knowledge)._find_record("LoopRun", run_id)
     frontmatter = run["frontmatter"]
     assert frontmatter["status"] == "closed"
-    assert len(frontmatter["readings"]) == 6
-    assert frontmatter["goals"] == [goal["id"]]
-    assert frontmatter["decisions"] == [decision["id"]]
-    assert frontmatter["evidence"] == [change["id"], verification["id"]]
-    assert frontmatter["checks"] == [okf_check["id"], tests_check["id"]]
-    assert frontmatter["outcome"] == outcome["id"]
+    assert "readings" not in frontmatter
+    assert "outcome" not in frontmatter
+
+    components = Wisk.open(knowledge)._run_components("RunOutcome", run_id)
+    assert [item["frontmatter"]["id"] for item in components] == [outcome["id"]]
 
     with pytest.raises(ValueError, match="already closed"):
         ws.record_run_evidence(
@@ -158,8 +152,8 @@ def test_component_collision_is_explicit_and_does_not_duplicate_link(tmp_path: P
             finding="duplicate",
         )
 
-    run = Wisk.open(knowledge)._find_record("LoopRun", run_id)
-    assert run["frontmatter"]["readings"] == [first["id"]]
+    readings = Wisk.open(knowledge)._run_components("RunReading", run_id)
+    assert [item["frontmatter"]["id"] for item in readings] == [first["id"]]
 
 
 def test_outcome_refuses_unmet_run_prerequisites(tmp_path: Path) -> None:

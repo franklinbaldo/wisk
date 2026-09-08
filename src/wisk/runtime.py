@@ -241,11 +241,6 @@ class Wisk:
             "status": "scaffold",
             "run_spec": spec["id"],
             "task": task,
-            "readings": [],
-            "goals": [],
-            "decisions": [],
-            "evidence": [],
-            "checks": [],
         }
         path.write_text(self._render_markdown(frontmatter, "# Live run\n"), encoding="utf-8")
         self._reload()

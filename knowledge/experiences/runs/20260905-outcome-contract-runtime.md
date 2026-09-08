@@ -6,16 +6,6 @@ result_state: merged
 work_status: complete
 summary: "Contract-guided execution is now implemented, typed, backed by declared-empty-type export in okf-parser, and dogfooded by a real persisted Wisk run."
 next_move: "Use wisk start/check as the default development-loop entrypoint and let future runs evolve RunSpec requirements from observed experience."
-goals_advanced:
-  - run-goals/20260905-contract-runtime
-evidence:
-  - run-evidence/20260905-start-check-runtime
-  - run-evidence/20260905-contract-verification
-checks:
-  - run-checks/20260905-okf
-  - run-checks/20260905-tests
-experiences_recorded:
-  - experiences/20260905-contract-first-types
 ---
 
 # Run outcome

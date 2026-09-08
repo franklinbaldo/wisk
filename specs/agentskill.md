@@ -20,7 +20,6 @@ A skill may also reference a `RunSpec` that turns the skill into a contract-guid
 
 ## Optional Frontmatter Fields
 
-- `derived_from`: Links to `[WikiEntry](../wiki/...)` justifying this procedure
 - `tags`: List of domain/tool tags
 - `run_spec`: Link to the default `RunSpec` that operationalizes this skill
 
