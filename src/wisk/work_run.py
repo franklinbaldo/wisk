@@ -183,9 +183,7 @@ class WorkRunWisk(LiveRunWisk):
             "outcomes": "RunOutcome",
         }
         components = {
-            name: [
-                dict(item["frontmatter"]) for item in self._run_components(concept_type, run_id)
-            ]
+            name: [dict(item["frontmatter"]) for item in self._run_components(concept_type, run_id)]
             for name, concept_type in mapping.items()
         }
         return {
