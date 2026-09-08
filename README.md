@@ -2,7 +2,9 @@
 
 > **Contract-guided agent execution and persistent learning on OKF.**
 
-`wisk` is an experimental agent runtime inspired by Google Research's 2026 work on compiling agent experience into persistent knowledge for skill evolution.
+`wisk` is an experimental agent runtime inspired by the Google Research paper **[“WikiSkill: Compiling Agent Experience into Persistent Knowledge for Skill Evolution”](https://arxiv.org/abs/2608.27454)** by Liyan Tang, Cyrus Rashtchian, Chun-Sung Ferng, Andrew Tomkins, Da-Cheng Juan, and Tu Vu (2026).
+
+WikiSkill's separation between **raw execution experience**, **persistent wiki knowledge**, and **executable skills** is a primary architectural influence on Wisk. Wisk adds a repository-oriented, contract-guided runtime around that learning cycle. When a Wisk design or consumer specialization is ambiguous, the paper is an explicit reference for the intended Experience → Wiki → Skill semantics; Wisk's own RFCs define the product-specific extensions and operational contracts.
 
 It uses [Open Knowledge Format (OKF)](https://github.com/franklinbaldo/okf-parser) to represent live execution state and persistent learning as an auditable typed knowledge graph.
 
@@ -10,25 +12,29 @@ It uses [Open Knowledge Format (OKF)](https://github.com/franklinbaldo/okf-parse
 
 Wisk is intended to be adopted by an existing repository, not reconstructed from a long prompt.
 
+For a project managed with `uv`, install Wisk from PyPI as a normal project dependency and run it through that project's environment:
+
 ```bash
-uvx wisk init
-wisk start
+uv add wisk
+uv sync
+uv run wisk init
+uv run wisk start
 ```
 
-`wisk init` creates a managed `.wisk/` bundle containing compatible normative contracts, canonical learning roles, and the standard consumer profile. It is a one-time adoption step; ordinary scheduled or interactive work thereafter enters through `wisk start`.
+`wisk init` creates a managed `.wisk/` bundle containing compatible normative contracts, canonical learning roles, the standard consumer profile, and Wisk's managed consumer-adoption guidance. It is a one-time adoption step; ordinary scheduled or interactive work thereafter enters through `wisk start` (for example, `uv run wisk start` in a `uv` project).
 
 `wisk start` needs no task. It resumes compatible live work when present; otherwise it selects the best eligible SessionType and returns the next typed contract action. Optional task, SessionType, and RunSpec constraints remain available:
 
 ```bash
-wisk start "Improve CLI ergonomics"
-wisk start --session-type wiki
-wisk start --run-spec local-review
+uv run wisk start "Improve CLI ergonomics"
+uv run wisk start --session-type wiki
+uv run wisk start --run-spec local-review
 ```
 
 Managed runtime files can be refreshed explicitly with:
 
 ```bash
-wisk upgrade
+uv run wisk upgrade
 ```
 
 Upgrade checks hashes before writing. If a Wisk-managed file was edited locally, the command reports a conflict and leaves the installation untouched. Consumer-owned files and runtime knowledge are never overwritten by managed upgrade.
@@ -54,7 +60,7 @@ RunSpec
   → Experience
 ```
 
-That episodic evidence feeds the canonical three-role learning cycle:
+That raw episodic evidence feeds the canonical three-role learning cycle:
 
 ```text
 Skill creates/refines a candidate
@@ -67,9 +73,9 @@ Skill revisits the candidate and decides its lifecycle
               └──────────────→ next Experience
 ```
 
-The canonical roles are **Experience**, **Wiki**, and **Skill**. `SkillEvaluation` remains available as an optional explicit benchmark/review artifact when useful.
+The canonical roles are **Experience**, **Wiki**, and **Skill**. Experience owns observation, not synthesis: it records truthful episodic evidence and does not decide that a lesson should become a `WikiEntry` or change an `AgentSkill`. Wiki owns synthesis across Experiences; Skill owns procedural intervention and lifecycle decisions. `SkillEvaluation` remains available as an optional explicit benchmark/review artifact when useful.
 
-See [RFC 0004](docs/rfc/0004-canonical-learning-cycle.md).
+See [RFC 0004](docs/rfc/0004-canonical-learning-cycle.md) and the [WikiSkill paper](https://arxiv.org/abs/2608.27454).
 
 ## Standard profile
 
@@ -109,7 +115,7 @@ Consumers specialize `RunSpec` rather than forcing domain rules into Wisk core. 
 
 ## Persistent learning
 
-- **`Experience`** — episodic evidence distilled from real execution.
+- **`Experience`** — truthful raw episodic evidence from real execution.
 - **`WikiEntry`** — durable knowledge synthesized across experiences.
 - **`AgentSkill`** — reusable procedural guidance; active and experimental versions may coexist.
 - **`SkillProposal`** — explicit change record/rationale for procedural evolution.
