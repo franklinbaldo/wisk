@@ -13,10 +13,7 @@ authors = [
     { name = "Franklin Silveira Baldo", email = "franklinbaldo@gmail.com" },
 ]
 dependencies = [
-    "okf-parser>=0.45.8",
-    "ibis-framework[duckdb]>=9.0",
-    "duckdb>=1.0",
-    "networkx>=3.2",
+    "okf-parser>=0.45.9",
     "pydantic>=2.7",
     "cyclopts>=4.0",
     "fastmcp>=3.0",
