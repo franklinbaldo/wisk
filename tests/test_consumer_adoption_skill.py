@@ -29,8 +29,7 @@ def test_standard_experience_explicitly_forbids_wiki_or_skill_synthesis(tmp_path
     init_repository(tmp_path)
 
     session = (
-        tmp_path
-        / ".wisk/knowledge/system/profiles/standard/session-types/standard-experience.md"
+        tmp_path / ".wisk/knowledge/system/profiles/standard/session-types/standard-experience.md"
     ).read_text(encoding="utf-8")
 
     assert "truthful raw episodic evidence" in session
