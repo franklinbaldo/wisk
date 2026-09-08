@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - pyproject.toml
+      - src/wisk/__init__.py
   workflow_dispatch:
 
 permissions:
