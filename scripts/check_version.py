@@ -42,7 +42,8 @@ def parse_semver(ver: str) -> tuple[int, int, int]:
     if not match:
         msg = f"Invalid release version: {ver}"
         raise ValueError(msg)
-    return tuple(int(part) for part in match.groups())
+    major, minor, patch = match.groups()
+    return int(major), int(minor), int(patch)
 
 
 def get_base_version(base_ref: str = "origin/main") -> str | None:
