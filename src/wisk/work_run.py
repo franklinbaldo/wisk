@@ -51,7 +51,9 @@ class WorkRunWisk(LiveRunWisk):
         path = self.root_path / run["path"]
         previous = path.read_text(encoding="utf-8")
         frontmatter = dict(run["frontmatter"])
-        started_at = str(frontmatter.get("started_at") or frontmatter.get("timestamp") or self._now())
+        started_at = str(
+            frontmatter.get("started_at") or frontmatter.get("timestamp") or self._now()
+        )
         frontmatter["started_at"] = started_at
         # Keep timestamp during the 0.4 RC migration window so 0.3.x consumers remain readable.
         frontmatter.setdefault("timestamp", started_at)
@@ -181,7 +183,9 @@ class WorkRunWisk(LiveRunWisk):
             "outcomes": "RunOutcome",
         }
         components = {
-            name: [dict(item["frontmatter"]) for item in self._run_components(concept_type, run_id)]
+            name: [
+                dict(item["frontmatter"]) for item in self._run_components(concept_type, run_id)
+            ]
             for name, concept_type in mapping.items()
         }
         return {
@@ -346,7 +350,9 @@ class WorkRunWisk(LiveRunWisk):
             with component_path.open("x", encoding="utf-8", newline="\n") as handle:
                 handle.write(self._render_markdown(frontmatter, f"# {concept_type}\n"))
             run_path.write_text(
-                self._render_markdown(updated_run, run_body), encoding="utf-8", newline="\n"
+                self._render_markdown(updated_run, run_body),
+                encoding="utf-8",
+                newline="\n",
             )
             self._require_conformant_bundle()
         except Exception:
