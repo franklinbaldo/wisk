@@ -2,13 +2,13 @@
 type: RunSpec
 id: run-specs/skill
 title: Skill evolution run
-version: "1.0.0"
+version: "1.1.0"
 status: experimental
 required_reading_kinds:
   - wiki
-  - experiences
+  - work-runs
   - active-skills
-  - active-handoffs
+  - proposal-history
 required_goal_kinds:
   - evolve-skill
 required_evidence_kinds:
@@ -23,9 +23,11 @@ allowed_result_states:
   - no-change
   - partial
   - blocked
-completion_notes: "Make a justified procedural intervention or lifecycle decision, preserving lineage to the WikiEntry and Experience evidence that supports it."
+completion_notes: "Make one justified procedural intervention or lifecycle decision, preserving lineage to Wiki knowledge, selected Work traces, the candidate skill/version, and prior proposal outcomes."
 ---
 
 # Skill RunSpec
 
-The canonical procedural-evolution contract. `lineage` asks whether the intervention or lifecycle action is supported by durable knowledge and traceable execution evidence. Creating a candidate does not satisfy promotion; promotion is a later possible result after evidence accumulates.
+The canonical procedural-evolution contract. `lineage` asks whether an intervention or lifecycle action is supported by durable knowledge and traceable Work evidence, and whether relevant prior proposal/gating outcomes were considered.
+
+Creating an experimental candidate does not satisfy promotion. Promotion is a later possible result after subsequent Work traces record the exact candidate version exercised and Wiki synthesis compares the resulting evidence.
