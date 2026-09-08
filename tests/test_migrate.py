@@ -55,9 +55,7 @@ def test_migrate_drops_backlinks_and_adds_explicit_start_time() -> None:
 
 
 def test_migrate_leaves_unrelated_documents_alone() -> None:
-    entry = (
-        '---\ntype: "WikiEntry"\nid: "wiki/one"\nevidence:\n  - runs/one\n---\n\n# Entry\n'
-    )
+    entry = '---\ntype: "WikiEntry"\nid: "wiki/one"\nevidence:\n  - runs/one\n---\n\n# Entry\n'
 
     migrated, transformations = migrate_document(entry)
 
