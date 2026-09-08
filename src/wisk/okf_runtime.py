@@ -79,8 +79,9 @@ class OKFWorkRunWisk(WorkRunWisk):
             f"{self._sql_identifier(field)} = {self._sql_literal(value)}"
             for field, value in updates.items()
         )
+        # Identifiers/scalars are bounded above; remove this bridge after okf-parser #257.
         sql = (
-            f"UPDATE {self._sql_identifier(concept_type)} SET {assignments} "  # nosec B608 -- bounded internal identifiers/scalars; remove after okf-parser #257.
+            f"UPDATE {self._sql_identifier(concept_type)} SET {assignments} "  # nosec B608
             f"WHERE __okf_path = {self._sql_literal(relative_path)}"
         )
         result = apply_bundle(
