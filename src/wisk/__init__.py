@@ -1,12 +1,6 @@
-"""Wisk compatibility runtime built on OKF.
+"""Wisk contract-guided execution and persistent-learning runtime."""
 
-The public product/package name is ``wisk``. ``wisk`` remains importable
-for compatibility with existing consumers during the rename transition.
-"""
-
-from wisk.live_run import LiveRunWisk as Wisk
-
-Wisk = Wisk
+from wisk.work_run import WorkRunWisk as Wisk
 
 __version__ = "0.4.0rc1"
-__all__ = ["Wisk", "Wisk", "__version__"]
+__all__ = ["Wisk", "__version__"]
