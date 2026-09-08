@@ -21,7 +21,7 @@ def test_bootstrap_installs_consumer_adoption_skill_with_role_boundaries(tmp_pat
     assert "https://arxiv.org/abs/2608.27454" in text
     assert "Experience" in text and "truthful raw episodic evidence" in text
     assert "Wiki" in text and "synthesizes durable knowledge" in text
-    assert "Skill" in text and "procedural" in text
+    assert "Skill" in text and "AgentSkill procedure" in text
     assert "Never put instructions" in text
 
 
