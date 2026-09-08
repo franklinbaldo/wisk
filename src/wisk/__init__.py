@@ -8,5 +8,5 @@ from wisk.live_run import LiveRunWisk as Wisk
 
 Wisk = Wisk
 
-__version__ = "0.4.0"
+__version__ = "0.4.0rc1"
 __all__ = ["Wisk", "Wisk", "__version__"]
