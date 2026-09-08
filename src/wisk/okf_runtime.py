@@ -80,7 +80,7 @@ class OKFWorkRunWisk(WorkRunWisk):
             for field, value in updates.items()
         )
         sql = (
-            f"UPDATE {self._sql_identifier(concept_type)} SET {assignments} "
+            f"UPDATE {self._sql_identifier(concept_type)} SET {assignments} "  # nosec B608 -- bounded internal identifiers/scalars; remove after okf-parser #257.
             f"WHERE __okf_path = {self._sql_literal(relative_path)}"
         )
         result = apply_bundle(
