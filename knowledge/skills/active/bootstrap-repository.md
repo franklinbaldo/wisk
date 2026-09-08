@@ -2,7 +2,7 @@
 type: AgentSkill
 id: skill-bootstrap-repository
 title: Bootstrap new OKF-driven agent repository
-version: "0.1.0"
+version: "0.2.0"
 status: active
 tags: [bootstrap, setup, git]
 ---
@@ -17,4 +17,4 @@ Establishes a compliant Open Knowledge Format repository with strict architectur
 2. Define `pyproject.toml` targeting Python 3.12+, pinning `okf-parser`, `fastmcp`, `cyclopts`, `ibis-framework`.
 3. Scaffold concept specifications in `specs/`.
 4. Run `okf-parser check` and establish pre-commit validation.
-5. Create initial authentic bootstrap `Experience` and `WikiEntry` records documenting the genesis decisions.
+5. Record an initial authentic raw `Experience` documenting what actually happened during bootstrap. Do not synthesize a `WikiEntry` in the same Experience merely because the bootstrap revealed a reusable lesson; Wiki sessions own later synthesis across Experiences.
