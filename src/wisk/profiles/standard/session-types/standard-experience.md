@@ -1,20 +1,20 @@
 ---
 type: SessionType
 id: session-types/standard-experience
-title: Standard Experience
-purpose: "Perform useful work in the consumer repository and preserve truthful raw episodic evidence about what actually happened."
+title: Standard Experience (deprecated compatibility alias)
+purpose: "Preserve pre-0.4 consumer inheritance while applying the canonical Work execution semantics."
 run_spec: run-specs/experience
 extends: session-types/experience
 context_policy: context-policies/standard-experience
 cadence_policy: cadence-policies/standard-experience
 nudges:
-  - "Prefer useful repository work over producing Wisk metadata for its own sake."
-  - "Record Experience as raw episodic evidence; do not synthesize it into WikiEntry or evolve AgentSkill in an Experience session. Wiki owns synthesis and Skill owns procedural change."
-  - "A no-useful-change outcome is valid when modification would create churn rather than value."
+  - "Deprecated in 0.4: new consumer execution roles should extend session-types/standard-work."
+  - "Treat the LoopRun and its typed Run* children as the raw execution trace; do not create a redundant Experience summary as part of ordinary Work."
+  - "Leave Wiki synthesis and Skill intervention to their later roles."
 ---
 
-# Standard Experience
+# Standard Experience compatibility alias
 
-Default consumer specialization. Repositories can add a local SessionType that extends this one and selects a domain-specific RunSpec.
+This managed SessionType remains during the 0.4 RC so existing consumer SessionTypes that extend `session-types/standard-experience` continue to resolve. It inherits the canonical Work role through `session-types/experience`.
 
-Experience owns observation, not synthesis or skill evolution. Preserve what happened faithfully enough that later Wiki sessions can consolidate multiple Experiences and later Skill sessions can decide whether procedural guidance should change.
+New consumers should use `session-types/standard-work`.
