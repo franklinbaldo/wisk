@@ -2,6 +2,8 @@ CREATE TABLE "LoopRun" (
     "id" VARCHAR,
     "title" VARCHAR,
     "timestamp" TIMESTAMPTZ,
+    "started_at" TIMESTAMPTZ,
+    "finished_at" TIMESTAMPTZ,
     "status" VARCHAR,
     "run_spec" VARCHAR,
     "run_spec_version" VARCHAR,
