@@ -75,7 +75,8 @@ def test_init_creates_conformant_managed_consumer_bundle(tmp_path: Path) -> None
     assert (root / ".gitignore").read_text(encoding="utf-8") == (
         "/.gitignore\n/manifest.json\n/specs/\n/knowledge/system/\n"
     )
-    assert (root / "knowledge/system/profiles/standard/session-types/work.md").is_file()
+    assert (root / "knowledge/system/canonical/session-types/work.md").is_file()
+    assert (root / "knowledge/system/canonical/run-specs/work.md").is_file()
     assert (root / "knowledge/system/profiles/standard/session-types/standard-work.md").is_file()
 
     ws = Wisk.open(root / "knowledge")
@@ -112,7 +113,7 @@ def test_init_preserves_versioned_runtime_knowledge(tmp_path: Path) -> None:
         "skills/shared.txt",
     ):
         path = knowledge / relative
-        path.parent.mkdir(parents=True, exist_ok=True)
+        path.parent.mkdir(parents=True)
         path.write_text(f"keep {relative}", encoding="utf-8")
         preserved.append(path)
     before = {path: path.read_bytes() for path in preserved}
