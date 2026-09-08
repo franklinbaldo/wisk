@@ -76,7 +76,7 @@ class OKFWorkRunWisk(WorkRunWisk):
             return {"succeeded": True, "written": False, "changed_paths": []}
         relative_path = str(record["path"])
         assignments = ", ".join(
-            f'{self._sql_identifier(field)} = {self._sql_literal(value)}'
+            f"{self._sql_identifier(field)} = {self._sql_literal(value)}"
             for field, value in updates.items()
         )
         sql = (
