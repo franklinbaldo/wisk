@@ -1,14 +1,14 @@
 ---
 type: Changelog
-version: 0.4.0
+version: 0.4.0rc1
 date: 2026-09-08
 ---
 
-# Schema simplification: one source of truth per link
+# 0.4 RC: schema simplification and learning-model pivot
 
-Run components already carry a `run` back-reference, and the runtime derives every
-component list from that reference. The parallel lists stored on `LoopRun` were a
-second, drift-prone copy of the same graph, so they are gone.
+This pre-release begins the 0.4 architecture migration described by RFC 0007. It keeps the one-source-of-truth schema cleanup from PR #70, but deliberately ships as an RC while the canonical Work → Wiki → Skill → Work learning loop is dogfooded in a real consumer before stable 0.4.0.
+
+Run components already carry a `run` back-reference, and the runtime derives every component list from that reference. The parallel lists stored on `LoopRun` were a second, drift-prone copy of the same graph, so they are gone.
 
 - `LoopRun` drops `readings`, `goals`, `decisions`, `evidence`, `checks`, `outcome`,
   `skills_consulted`, `experiences_recorded`, and `proposals_generated`. `status`
@@ -37,7 +37,9 @@ second, drift-prone copy of the same graph, so they are gone.
   `decision_rationale`. A rejected proposal is kept, not deleted — it is what stops a
   later Skill session from retrying a change that already failed;
 - `LoopRun.timestamp`, `RunEvidence.observed_at`, and `RunCheck.observed_at` are
-  `TIMESTAMPTZ`, matching `Experience.timestamp`.
+  `TIMESTAMPTZ`, matching the previous Experience timestamp contract.
+
+RFC 0007 deliberately expands the 0.4 target beyond this first patch: the RC will migrate the canonical execution role from Experience to Work, treat Work LoopRun traces as the Raw Layer, add run observations and explicit skill/version provenance, separate Worker/Wiki/Skill context policies, and dogfood a complete skill-evolution cycle before promotion to stable `0.4.0`.
 
 This is a breaking schema change: a consumer bundle carrying the removed frontmatter
 keys fails normative OKF validation until they are dropped. `wisk migrate` reports what
