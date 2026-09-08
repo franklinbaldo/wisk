@@ -14,7 +14,10 @@ def test_bootstrap_installs_consumer_adoption_skill_with_role_boundaries(tmp_pat
     assert skill.is_file()
 
     text = skill.read_text(encoding="utf-8")
-    assert "WikiSkill: Compiling Agent Experience into Persistent Knowledge for Skill Evolution" in text
+    paper_title = (
+        "WikiSkill: Compiling Agent Experience into Persistent Knowledge for Skill Evolution"
+    )
+    assert paper_title in text
     assert "https://arxiv.org/abs/2608.27454" in text
     assert "Experience" in text and "truthful raw episodic evidence" in text
     assert "Wiki" in text and "synthesizes durable knowledge" in text
