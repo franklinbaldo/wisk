@@ -4,7 +4,5 @@ CREATE TABLE "RunOutcome" (
     "result_state" VARCHAR,
     "work_status" VARCHAR,
     "summary" VARCHAR,
-    "next_move" VARCHAR,
-    "evidence" VARCHAR[],
-    "checks" VARCHAR[]
+    "next_move" VARCHAR
 );

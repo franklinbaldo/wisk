@@ -26,6 +26,8 @@ A `RunDecision` records a meaningful choice that changes how the run proceeds.
 
 The purpose is not to log every thought. Record decisions that affect architecture, scope, interpretation, prioritization, validation, or the next state of the run.
 
-A decision is recorded before the evidence that supports it exists, and run
-components are append-only, so the link lives on `RunEvidence.decision`: later
-evidence declares which decision it bears on.
+A decision carries no link to evidence in either direction. It is recorded before
+the evidence supporting it exists, and run components are append-only, so no such
+edge can be written honestly at either end. Evidence links to its `run` and `goal`;
+`RunCheck.evidence` ties a verification to the concrete fact it rests on. Causal
+analysis across those records is Wiki work, not raw-layer bookkeeping.

@@ -20,7 +20,6 @@ A `RunEvidence` is a concrete fact supporting claims about the current state of 
 ## Optional Frontmatter Fields
 
 - `goal`: Link to the `RunGoal` supported by this evidence
-- `decision`: Link to the `RunDecision` this evidence bears on
 - `observed_at`: ISO-8601 timestamp
 
 ## Semantics

@@ -10,6 +10,7 @@ from typing import Any
 from okf_parser import load_bundle
 
 from wisk.cadence import CadenceWisk
+from wisk.runtime import unsatisfied_requirements
 
 _LIFECYCLE_CHECK_KINDS = frozenset(
     {"handoff", "goal-state", "handoff-environment", "handoff-disposition"}
@@ -210,50 +211,7 @@ class PinnedWisk(CadenceWisk):
         spec_fm: dict[str, Any],
         components: dict[str, list[dict[str, Any]]],
     ) -> list[dict[str, Any]]:
-        unsatisfied: list[dict[str, Any]] = []
-        requirements = (
-            ("reading", "required_reading_kinds", components["readings"]),
-            ("goal", "required_goal_kinds", components["goals"]),
-            ("evidence", "required_evidence_kinds", components["evidence"]),
-            ("check", "required_check_kinds", components["checks"]),
-        )
-        for label, field, records in requirements:
-            required = [str(item) for item in spec_fm.get(field, [])]
-            present = {str(item["frontmatter"].get("kind") or "") for item in records}
-            for kind in required:
-                if kind not in present:
-                    unsatisfied.append(
-                        {
-                            "requirement": f"{label}:{kind}",
-                            "kind": label,
-                            "expected": kind,
-                            "message": f"Record Run{label.title()} kind '{kind}'.",
-                        }
-                    )
-
-        outcomes = components["outcomes"]
-        if not outcomes:
-            unsatisfied.append(
-                {
-                    "requirement": "outcome",
-                    "kind": "outcome",
-                    "message": "Record a RunOutcome for the state reached in this round.",
-                }
-            )
-        else:
-            allowed = {str(item) for item in spec_fm.get("allowed_result_states", [])}
-            result_state = str(outcomes[-1]["frontmatter"].get("result_state") or "")
-            if allowed and result_state not in allowed:
-                unsatisfied.append(
-                    {
-                        "requirement": "outcome:result_state",
-                        "kind": "outcome",
-                        "expected": sorted(allowed),
-                        "observed": result_state,
-                        "message": "RunOutcome result_state is outside the pinned RunSpec.",
-                    }
-                )
-        return unsatisfied
+        return unsatisfied_requirements(spec_fm, components, spec_label="pinned")
 
     @staticmethod
     def _canonical_snapshot(frontmatter: dict[str, Any]) -> str:

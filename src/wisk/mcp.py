@@ -238,7 +238,6 @@ def wisk_run_evidence(
     reference: str,
     summary: str,
     goal: str | None = None,
-    decision: str | None = None,
     observed_at: str | None = None,
     path: str | None = None,
 ) -> dict[str, Any]:
@@ -249,7 +248,6 @@ def wisk_run_evidence(
         reference=reference,
         summary=summary,
         goal=goal,
-        decision=decision,
         observed_at=observed_at,
     )
 
@@ -268,6 +266,7 @@ def wisk_run_check_record(
     status: str,
     evidence: str | None = None,
     goal: str | None = None,
+    observed_at: str | None = None,
     path: str | None = None,
 ) -> dict[str, Any]:
     return _get_runtime(path).record_run_check(
@@ -279,6 +278,7 @@ def wisk_run_check_record(
         status=status,
         evidence=evidence,
         goal=goal,
+        observed_at=observed_at,
     )
 
 
@@ -294,8 +294,6 @@ def wisk_run_outcome(
     work_status: str,
     summary: str,
     next_move: str,
-    evidence: list[str] | None = None,
-    checks: list[str] | None = None,
     path: str | None = None,
 ) -> dict[str, Any]:
     return _get_runtime(path).record_run_outcome(
@@ -305,8 +303,6 @@ def wisk_run_outcome(
         work_status=work_status,
         summary=summary,
         next_move=next_move,
-        evidence=evidence,
-        checks=checks,
     )
 
 

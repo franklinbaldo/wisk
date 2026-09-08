@@ -15,6 +15,106 @@ _EXPERIENCE_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
 _EXPERIENCE_STATUSES = frozenset({"success", "failure", "partial", "observation"})
 
 
+def _standing_check(records: list[dict[str, Any]], kind: str) -> dict[str, Any] | None:
+    """Return the check that currently stands for one kind, or None when absent.
+
+    Checks are append-only, so a later check of the same kind supersedes an earlier
+    one. Ordering is by `observed_at` where present, and by record order otherwise.
+    """
+    matching = [
+        (index, item)
+        for index, item in enumerate(records)
+        if str(item["frontmatter"].get("kind") or "") == kind
+    ]
+    if not matching:
+        return None
+
+    def ordering(pair: tuple[int, dict[str, Any]]) -> tuple[str, int]:
+        index, item = pair
+        return str(item["frontmatter"].get("observed_at") or ""), index
+
+    return max(matching, key=ordering)[1]
+
+
+def unsatisfied_requirements(
+    spec_fm: dict[str, Any],
+    components: dict[str, list[dict[str, Any]]],
+    *,
+    spec_label: str,
+) -> list[dict[str, Any]]:
+    """Report what a RunSpec still requires from a live run's recorded components."""
+    unsatisfied: list[dict[str, Any]] = []
+    presence_requirements = (
+        ("reading", "required_reading_kinds", components["readings"]),
+        ("goal", "required_goal_kinds", components["goals"]),
+        ("evidence", "required_evidence_kinds", components["evidence"]),
+    )
+    for label, field, records in presence_requirements:
+        required = [str(item) for item in spec_fm.get(field, [])]
+        present = {str(item["frontmatter"].get("kind") or "") for item in records}
+        for kind in required:
+            if kind not in present:
+                unsatisfied.append(
+                    {
+                        "requirement": f"{label}:{kind}",
+                        "kind": label,
+                        "expected": kind,
+                        "message": f"Record Run{label.title()} kind '{kind}'.",
+                    }
+                )
+
+    for kind in [str(item) for item in spec_fm.get("required_check_kinds", [])]:
+        standing = _standing_check(components["checks"], kind)
+        if standing is None:
+            unsatisfied.append(
+                {
+                    "requirement": f"check:{kind}",
+                    "kind": "check",
+                    "expected": kind,
+                    "message": f"Record RunCheck kind '{kind}'.",
+                }
+            )
+            continue
+        status = str(standing["frontmatter"].get("status") or "")
+        if status != "pass":
+            unsatisfied.append(
+                {
+                    "requirement": f"check:{kind}",
+                    "kind": "check",
+                    "expected": kind,
+                    "observed": status,
+                    "message": (
+                        f"RunCheck kind '{kind}' stands at '{status}'. "
+                        "Record a later check of the same kind that passes."
+                    ),
+                }
+            )
+
+    outcomes = components["outcomes"]
+    if not outcomes:
+        unsatisfied.append(
+            {
+                "requirement": "outcome",
+                "kind": "outcome",
+                "message": "Record a RunOutcome for the state reached in this round.",
+            }
+        )
+    else:
+        allowed = {str(item) for item in spec_fm.get("allowed_result_states", [])}
+        result_state = str(outcomes[-1]["frontmatter"].get("result_state") or "")
+        if allowed and result_state not in allowed:
+            unsatisfied.append(
+                {
+                    "requirement": "outcome:result_state",
+                    "kind": "outcome",
+                    "expected": sorted(allowed),
+                    "observed": result_state,
+                    "message": f"RunOutcome result_state is outside the {spec_label} RunSpec.",
+                }
+            )
+    return unsatisfied
+
+
 class Wisk:
     """Contract-guided agent execution and learning runtime backed by OKF."""
 
@@ -275,49 +375,7 @@ class Wisk:
             "outcomes": self._run_components("RunOutcome", run_id),
         }
 
-        unsatisfied: list[dict[str, Any]] = []
-        requirements = (
-            ("reading", "required_reading_kinds", components["readings"]),
-            ("goal", "required_goal_kinds", components["goals"]),
-            ("evidence", "required_evidence_kinds", components["evidence"]),
-            ("check", "required_check_kinds", components["checks"]),
-        )
-        for label, field, records in requirements:
-            required = [str(item) for item in spec_fm.get(field, [])]
-            present = {str(item["frontmatter"].get("kind") or "") for item in records}
-            for kind in required:
-                if kind not in present:
-                    unsatisfied.append(
-                        {
-                            "requirement": f"{label}:{kind}",
-                            "kind": label,
-                            "expected": kind,
-                            "message": f"Record Run{label.title()} kind '{kind}'.",
-                        }
-                    )
-
-        outcomes = components["outcomes"]
-        if not outcomes:
-            unsatisfied.append(
-                {
-                    "requirement": "outcome",
-                    "kind": "outcome",
-                    "message": "Record a RunOutcome for the state reached in this round.",
-                }
-            )
-        else:
-            allowed = {str(item) for item in spec_fm.get("allowed_result_states", [])}
-            result_state = str(outcomes[-1]["frontmatter"].get("result_state") or "")
-            if allowed and result_state not in allowed:
-                unsatisfied.append(
-                    {
-                        "requirement": "outcome:result_state",
-                        "kind": "outcome",
-                        "expected": sorted(allowed),
-                        "observed": result_state,
-                        "message": "RunOutcome result_state is outside the governing RunSpec.",
-                    }
-                )
+        unsatisfied = unsatisfied_requirements(spec_fm, components, spec_label="governing")
 
         conformant = bool(structural["conformant"]) and not unsatisfied
         if unsatisfied:

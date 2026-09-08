@@ -10,6 +10,7 @@ import cyclopts
 
 from wisk import __version__
 from wisk.bootstrap import DEFAULT_PROFILE, init_repository, upgrade_repository
+from wisk.migrate import migrate_bundle
 from wisk.operations import runtime as _runtime
 from wisk.operations import start as start_operation
 
@@ -56,6 +57,12 @@ def init_command(repository: str = ".", *, profile: str = DEFAULT_PROFILE) -> No
 def upgrade(repository: str = ".") -> None:
     """Upgrade Wisk-managed consumer files without overwriting local state."""
     _print_json(upgrade_repository(repository))
+
+
+@app.command(name="migrate")
+def migrate_command(path: str = "knowledge", *, apply: bool = False) -> None:
+    """Drop the frontmatter keys 0.4.0 removed from a 0.3.x knowledge bundle."""
+    _print_json(migrate_bundle(path, apply=apply))
 
 
 @app.command
@@ -244,7 +251,6 @@ def run_evidence(
     *,
     path: str | None = None,
     goal: str | None = None,
-    decision: str | None = None,
     observed_at: str | None = None,
 ) -> None:
     """Record one RunEvidence."""
@@ -256,7 +262,6 @@ def run_evidence(
             reference=reference,
             summary=summary,
             goal=goal,
-            decision=decision,
             observed_at=observed_at,
         )
     )
@@ -274,6 +279,7 @@ def run_check_record(
     path: str | None = None,
     evidence: str | None = None,
     goal: str | None = None,
+    observed_at: str | None = None,
 ) -> None:
     """Record one RunCheck."""
     _print_json(
@@ -286,6 +292,7 @@ def run_check_record(
             status=status,
             evidence=evidence,
             goal=goal,
+            observed_at=observed_at,
         )
     )
 
@@ -300,8 +307,6 @@ def run_outcome(
     next_move: str,
     *,
     path: str | None = None,
-    evidence: list[str] | None = None,
-    checks: list[str] | None = None,
 ) -> None:
     """Record the RunOutcome that closes a contract-ready run."""
     _print_json(
@@ -312,8 +317,6 @@ def run_outcome(
             work_status=work_status,
             summary=summary,
             next_move=next_move,
-            evidence=evidence,
-            checks=checks,
         )
     )
 
