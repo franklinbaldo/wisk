@@ -1,4 +1,4 @@
-"""Migration of 0.3.x consumer bundles to the 0.4.0 run schemas."""
+"""Migration of 0.3.x consumer bundles to the 0.4 RC Work-trace model."""
 
 from pathlib import Path
 
@@ -8,6 +8,7 @@ _LEGACY_RUN = """---
 type: "LoopRun"
 id: "runs/legacy"
 title: "Legacy run"
+timestamp: "2026-09-01T10:00:00Z"
 status: "closed"
 run_spec: "run-specs/wisk-development"
 task: "legacy"
@@ -22,41 +23,83 @@ decisions:
 # Live run
 """
 
+_LEGACY_EXPERIENCE = """---
+type: Experience
+id: experience-legacy
+title: Legacy experience
+timestamp: "2026-09-01T11:00:00Z"
+status: success
+run: runs/legacy
+skill_used: skill-example
+skill_version: "1.2.0"
+---
 
-def test_migrate_drops_removed_keys_and_keeps_the_rest() -> None:
-    migrated, dropped = migrate_document(_LEGACY_RUN)
+# Legacy experience
+"""
 
-    assert dropped == {"readings", "outcome", "decisions"}
+
+def test_migrate_drops_backlinks_and_adds_explicit_start_time() -> None:
+    migrated, transformations = migrate_document(_LEGACY_RUN)
+
+    assert transformations == {
+        "dropped:readings",
+        "dropped:outcome",
+        "dropped:decisions",
+        "added:started_at",
+    }
     assert "readings:" not in migrated
     assert "run-readings/one" not in migrated
     assert 'task: "legacy"' in migrated
+    assert 'started_at: "2026-09-01T10:00:00Z"' in migrated
     assert migrated.endswith("# Live run\n")
 
 
-def test_migrate_leaves_untouched_documents_alone() -> None:
+def test_migrate_leaves_unrelated_documents_alone() -> None:
     entry = (
-        '---\ntype: "WikiEntry"\nid: "wiki/one"\nevidence:\n  - experiences/one\n---\n\n# Entry\n'
+        '---\ntype: "WikiEntry"\nid: "wiki/one"\nevidence:\n  - runs/one\n---\n\n# Entry\n'
     )
 
-    migrated, dropped = migrate_document(entry)
+    migrated, transformations = migrate_document(entry)
 
-    assert dropped == set()
+    assert transformations == set()
     assert migrated == entry
 
 
-def test_migrate_bundle_reports_before_it_writes(tmp_path: Path) -> None:
+def test_migrate_bundle_reports_before_it_writes_and_preserves_legacy_experience(
+    tmp_path: Path,
+) -> None:
     (tmp_path / "runs").mkdir()
     target = tmp_path / "runs" / "legacy.md"
     target.write_text(_LEGACY_RUN, encoding="utf-8")
+    legacy_experience = tmp_path / "legacy-experience.md"
+    legacy_experience.write_text(_LEGACY_EXPERIENCE, encoding="utf-8")
 
     report = migrate_bundle(tmp_path)
+    assert report["target"] == "0.4.0rc1"
     assert report["applied"] is False
     assert report["documents"] == 1
-    assert report["changes"][0]["dropped"] == ["decisions", "outcome", "readings"]
+    assert report["changes"][0]["transformations"] == [
+        "added:started_at",
+        "dropped:decisions",
+        "dropped:outcome",
+        "dropped:readings",
+    ]
+    assert report["legacy_experiences"] == [
+        {
+            "path": "legacy-experience.md",
+            "run": "runs/legacy",
+            "skill_used": "skill-example",
+            "skill_version": '"1.2.0"',
+        }
+    ]
     assert target.read_text(encoding="utf-8") == _LEGACY_RUN
+    assert legacy_experience.read_text(encoding="utf-8") == _LEGACY_EXPERIENCE
 
     applied = migrate_bundle(tmp_path, apply=True)
     assert applied["applied"] is True
-    assert "readings:" not in target.read_text(encoding="utf-8")
+    migrated = target.read_text(encoding="utf-8")
+    assert "readings:" not in migrated
+    assert "started_at:" in migrated
+    assert legacy_experience.read_text(encoding="utf-8") == _LEGACY_EXPERIENCE
 
     assert migrate_bundle(tmp_path)["documents"] == 0
