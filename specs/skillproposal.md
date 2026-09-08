@@ -22,6 +22,7 @@ The proposal is the change record and rationale; it is not itself required to be
 
 - `motivation`: Summary of the reason for the proposal
 - `based_on`: Links to motivating `[WikiEntry](../wiki/...)` or `[Experience](../experiences/...)`
+- `run`: Link to the `LoopRun` that produced this proposal
 
 ## Content Structure
 

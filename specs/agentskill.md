@@ -20,8 +20,14 @@ A skill may also reference a `RunSpec` that turns the skill into a contract-guid
 
 ## Optional Frontmatter Fields
 
+- `derived_from`: Links to the `[WikiEntry](../wiki/...)` patterns that motivated this skill or its latest revision
 - `tags`: List of domain/tool tags
 - `run_spec`: Link to the default `RunSpec` that operationalizes this skill
+
+`derived_from` is the skill's only edge back into the wiki, and it is what makes a
+skill auditable: it answers which synthesized knowledge justifies this procedure.
+It carries the role of WikiSkill's `PURPOSE.md`, which maps each skill back to the
+wiki patterns that inspired its creation or modification.
 
 ## Content Structure
 

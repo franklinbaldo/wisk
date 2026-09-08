@@ -16,8 +16,11 @@ component list from that reference. The parallel lists stored on `LoopRun` and
   outcome guard reads the run's `RunOutcome` records instead of a stored pointer;
 - `RunOutcome` drops `goals_advanced`, `evidence`, `checks`, and `experiences_recorded`;
 - `RunEvidence` drops `decision`, keeping the single `RunDecision.evidence` direction;
-- `AgentSkill` drops the unused `derived_from`; `RunSpec` drops the unused
-  `allowed_entry_states`;
+- `RunSpec` drops the unused `allowed_entry_states`;
+- `SkillProposal` gains `run`, the back-reference that replaces the dropped
+  `LoopRun.proposals_generated` on the side that owns the link. `AgentSkill` keeps
+  `derived_from`: it is the skill's only edge back into the wiki, unexercised so far
+  rather than dead;
 - `LoopRun.timestamp` and `RunEvidence.observed_at` become `TIMESTAMPTZ`, matching
   `Experience.timestamp`;
 - `wisk run evidence` and `wisk run outcome`, and their MCP equivalents, lose the

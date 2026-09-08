@@ -3,5 +3,6 @@ CREATE TABLE "AgentSkill" (
     "title" VARCHAR,
     "version" VARCHAR,
     "status" VARCHAR,
+    "derived_from" VARCHAR[],
     "tags" VARCHAR[]
 );
