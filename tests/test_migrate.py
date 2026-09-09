@@ -2,6 +2,8 @@
 
 from pathlib import Path
 
+import pytest
+
 from wisk.migrate import migrate_bundle, migrate_document
 
 _LEGACY_RUN = """---
@@ -173,7 +175,7 @@ def test_migrate_does_not_treat_a_bracket_inside_a_quoted_scalar_as_a_flow_colle
 
 
 def test_migrate_finds_the_managed_bundle_a_consumer_actually_has(
-    tmp_path: Path, monkeypatch: object
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """A consumer's bundle lives at `.wisk/knowledge`, so a bare `wisk migrate` must find it."""
     from wisk.cli import migrate_command
@@ -181,7 +183,7 @@ def test_migrate_finds_the_managed_bundle_a_consumer_actually_has(
     managed = tmp_path / ".wisk" / "knowledge"
     managed.mkdir(parents=True)
     (managed / "run.md").write_text(_LEGACY_RUN, encoding="utf-8")
-    monkeypatch.chdir(tmp_path)  # type: ignore[attr-defined]
+    monkeypatch.chdir(tmp_path)
 
     migrate_command()
 
