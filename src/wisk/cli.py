@@ -11,6 +11,7 @@ import cyclopts
 from wisk import __version__
 from wisk.bootstrap import DEFAULT_PROFILE, init_repository, upgrade_repository
 from wisk.migrate import migrate_bundle
+from wisk.operations import resolve_knowledge_path
 from wisk.operations import runtime as _runtime
 from wisk.operations import start as start_operation
 
@@ -63,9 +64,9 @@ def upgrade(repository: str = ".") -> None:
 
 
 @app.command(name="migrate")
-def migrate_command(path: str = "knowledge", *, apply: bool = False) -> None:
+def migrate_command(path: str | None = None, *, apply: bool = False) -> None:
     """Inspect/apply the conservative 0.3.x -> 0.4 RC Work-trace migration."""
-    _print_json(migrate_bundle(path, apply=apply))
+    _print_json(migrate_bundle(resolve_knowledge_path(path), apply=apply))
 
 
 @app.command

@@ -170,3 +170,19 @@ def test_migrate_does_not_treat_a_bracket_inside_a_quoted_scalar_as_a_flow_colle
 
     assert changes == {"dropped:goals"}
     assert migrated == ('---\ntype: "LoopRun"\nid: "runs/quoted"\nstatus: "closed"\n---\n\n# Run\n')
+
+
+def test_migrate_finds_the_managed_bundle_a_consumer_actually_has(
+    tmp_path: Path, monkeypatch: object
+) -> None:
+    """A consumer's bundle lives at `.wisk/knowledge`, so a bare `wisk migrate` must find it."""
+    from wisk.cli import migrate_command
+
+    managed = tmp_path / ".wisk" / "knowledge"
+    managed.mkdir(parents=True)
+    (managed / "run.md").write_text(_LEGACY_RUN, encoding="utf-8")
+    monkeypatch.chdir(tmp_path)  # type: ignore[attr-defined]
+
+    migrate_command()
+
+    assert "readings:" in (managed / "run.md").read_text(encoding="utf-8")

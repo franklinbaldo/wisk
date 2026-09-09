@@ -66,4 +66,9 @@ it would remove from a bundle, and `wisk migrate --apply` removes it.
   *active* handoff is not stranded on a session type that is no longer selectable. An
   archived handoff records which session type actually continued the work, and rewriting
   it would falsify that history.
+- **`wisk migrate` now finds the bundle a consumer actually has.** It defaulted to a
+  literal `knowledge/` directory while every other command resolves the managed
+  `.wisk/knowledge` through `resolve_knowledge_path`, so a bare `wisk migrate` in a real
+  consumer failed with `Not a directory` — the opaque failure the migration path exists
+  to avoid.
 
