@@ -1,18 +1,18 @@
 ---
 type: SessionType
 id: session-types/inference
-title: Inference / work execution
-purpose: "Execute real work using active skills and produce episodic evidence of what happened."
+title: Inference / work execution (compatibility alias)
+purpose: "Backward-compatible paper-oriented name for the canonical Work role."
 run_spec: run-specs/inference
-extends: session-types/experience
+extends: session-types/work
 context_policy: context-policies/inference
 access_policy: access-policies/development
 cadence_policy: cadence-policies/inference
 nudges:
-  - "Use active skills as operating procedure and focus on the task in front of the session."
-  - "Record reusable execution evidence as Experience rather than silently carrying it to the next session."
+  - "Use applicable skills as operating procedure and focus on the task in front of the session."
+  - "Persist the Work LoopRun trace instead of relying on provider-local session memory."
 ---
 
 # Inference session
 
-Backward-compatible paper-oriented name for an Experience session. New consumers should normally extend `session-types/experience` directly.
+Backward-compatible WikiSkill-paper vocabulary for a Work session. New consumers should normally extend `session-types/work` or `session-types/standard-work`.

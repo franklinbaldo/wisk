@@ -117,5 +117,6 @@ def test_cli_experience_preview_and_record(
 
     experience_record(path=str(knowledge_path), **kwargs)
     captured = capsys.readouterr()
-    assert f"Recorded Experience {kwargs['experience_id']}" in captured.out
+    assert f"Recorded legacy Experience {kwargs['experience_id']}" in captured.out
+    assert "Deprecated in 0.4" in captured.err
     assert (knowledge_path / f"experiences/records/{kwargs['experience_id']}.md").exists()

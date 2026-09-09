@@ -6,7 +6,6 @@ kind: change
 reference: "wisk PR #32; okf-parser PR #248; wisk PR #33"
 summary: "PR #32 merged executable start/check semantics with green CI; PR #33 adds declared schemas for every run component and exposed the need for upstream declared-empty-type export; okf-parser #248 implements that generic capability."
 goal: run-goals/20260905-contract-runtime
-decision: run-decisions/20260905-declared-empty-types
 observed_at: "2026-09-05T14:47:00Z"
 ---
 

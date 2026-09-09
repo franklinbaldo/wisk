@@ -1,7 +1,9 @@
 CREATE TABLE "LoopRun" (
     "id" VARCHAR,
     "title" VARCHAR,
-    "timestamp" VARCHAR,
+    "timestamp" TIMESTAMPTZ,
+    "started_at" TIMESTAMPTZ,
+    "finished_at" TIMESTAMPTZ,
     "status" VARCHAR,
     "run_spec" VARCHAR,
     "run_spec_version" VARCHAR,
@@ -9,14 +11,5 @@ CREATE TABLE "LoopRun" (
     "run_spec_snapshot" VARCHAR,
     "session_type" VARCHAR,
     "task" VARCHAR,
-    "resumed_handoff" VARCHAR,
-    "readings" VARCHAR[],
-    "goals" VARCHAR[],
-    "decisions" VARCHAR[],
-    "evidence" VARCHAR[],
-    "checks" VARCHAR[],
-    "outcome" VARCHAR,
-    "skills_consulted" VARCHAR[],
-    "experiences_recorded" VARCHAR[],
-    "proposals_generated" VARCHAR[]
+    "resumed_handoff" VARCHAR
 );

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -17,14 +18,6 @@ _COMPONENT_PREFIXES = {
     "RunCheck": "run-checks",
     "RunOutcome": "run-outcomes",
 }
-_COMPONENT_FIELDS = {
-    "RunReading": "readings",
-    "RunGoal": "goals",
-    "RunDecision": "decisions",
-    "RunEvidence": "evidence",
-    "RunCheck": "checks",
-    "RunOutcome": "outcome",
-}
 _COMPONENT_LABELS = {
     "RunReading": "reading",
     "RunGoal": "goal",
@@ -36,6 +29,11 @@ _COMPONENT_LABELS = {
 _GOAL_STATUSES = frozenset({"planned", "active", "advanced", "achieved", "carried_forward"})
 _CHECK_STATUSES = frozenset({"pass", "fail", "inconclusive"})
 _WORK_STATUSES = frozenset({"complete", "partial"})
+
+
+def _now() -> str:
+    """An objective instant for records the caller did not timestamp itself."""
+    return datetime.now(UTC).isoformat().replace("+00:00", "Z")
 
 
 class LiveRunWisk(PinnedWisk):
@@ -148,7 +146,6 @@ class LiveRunWisk(PinnedWisk):
         rationale: str,
         goal: str | None = None,
         alternatives: list[str] | None = None,
-        evidence: list[str] | None = None,
     ) -> dict[str, Any]:
         """Record one consequential decision made during a live run."""
         return self._record_run_component(
@@ -161,7 +158,6 @@ class LiveRunWisk(PinnedWisk):
                 "rationale": rationale,
                 "goal": goal,
                 "alternatives": alternatives,
-                "evidence": evidence,
             },
         )
 
@@ -174,7 +170,6 @@ class LiveRunWisk(PinnedWisk):
         reference: str,
         summary: str,
         goal: str | None = None,
-        decision: str | None = None,
         observed_at: str | None = None,
     ) -> dict[str, Any]:
         """Record one concrete item of evidence for a live run."""
@@ -187,8 +182,7 @@ class LiveRunWisk(PinnedWisk):
                 "reference": reference,
                 "summary": summary,
                 "goal": goal,
-                "decision": decision,
-                "observed_at": observed_at,
+                "observed_at": observed_at or _now(),
             },
         )
 
@@ -203,6 +197,7 @@ class LiveRunWisk(PinnedWisk):
         status: str,
         evidence: str | None = None,
         goal: str | None = None,
+        observed_at: str | None = None,
     ) -> dict[str, Any]:
         """Record one explicit verification performed during a live run."""
         self._require_enum("status", status, _CHECK_STATUSES)
@@ -217,6 +212,7 @@ class LiveRunWisk(PinnedWisk):
                 "status": status,
                 "evidence": evidence,
                 "goal": goal,
+                "observed_at": observed_at or _now(),
             },
         )
 
@@ -229,10 +225,6 @@ class LiveRunWisk(PinnedWisk):
         work_status: str,
         summary: str,
         next_move: str,
-        goals_advanced: list[str] | None = None,
-        evidence: list[str] | None = None,
-        checks: list[str] | None = None,
-        experiences_recorded: list[str] | None = None,
     ) -> dict[str, Any]:
         """Close one run round with its coherent state and natural continuation."""
         self._require_enum("work_status", work_status, _WORK_STATUSES)
@@ -256,10 +248,6 @@ class LiveRunWisk(PinnedWisk):
                 "work_status": work_status,
                 "summary": summary,
                 "next_move": next_move,
-                "goals_advanced": goals_advanced,
-                "evidence": evidence,
-                "checks": checks,
-                "experiences_recorded": experiences_recorded,
             },
         )
 
@@ -277,9 +265,9 @@ class LiveRunWisk(PinnedWisk):
             raise ValueError(f"LoopRun is already closed: {run_id}")
 
         prefix = _COMPONENT_PREFIXES[concept_type]
-        field = _COMPONENT_FIELDS[concept_type]
         label = _COMPONENT_LABELS[concept_type]
-        if field == "outcome":
+        is_outcome = concept_type == "RunOutcome"
+        if is_outcome:
             current = self.check_run(run_id)
             prerequisites = [
                 item for item in current["unsatisfied"] if item.get("requirement") != "outcome"
@@ -299,7 +287,7 @@ class LiveRunWisk(PinnedWisk):
         component_path = run_path.parent / f"{run_slug}-{label}-{slug}.md"
         if component_path.exists():
             raise FileExistsError(component_path)
-        if field == "outcome" and run_fm.get("outcome"):
+        if is_outcome and self._run_components("RunOutcome", run_id):
             raise ValueError(f"LoopRun already has an outcome: {run_id}")
 
         frontmatter = {
@@ -311,16 +299,10 @@ class LiveRunWisk(PinnedWisk):
         previous_run = run_path.read_text(encoding="utf-8")
         run_body = self._body_from_document(previous_run)
         updated_run = dict(run_fm)
-        if field == "outcome":
-            updated_run["outcome"] = canonical_id
+        if is_outcome:
             updated_run["status"] = "closed"
-        else:
-            links = [str(item) for item in updated_run.get(field, [])]
-            if canonical_id not in links:
-                links.append(canonical_id)
-            updated_run[field] = links
-            if str(updated_run.get("status") or "") == "scaffold":
-                updated_run["status"] = "in_progress"
+        elif str(updated_run.get("status") or "") == "scaffold":
+            updated_run["status"] = "in_progress"
 
         component_content = self._render_markdown(frontmatter, f"# {concept_type}\n")
         run_content = self._render_markdown(updated_run, run_body)

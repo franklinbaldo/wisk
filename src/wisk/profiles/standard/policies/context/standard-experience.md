@@ -1,7 +1,7 @@
 ---
 type: ContextPolicy
 id: context-policies/standard-experience
-title: Standard Experience context
+title: Standard Experience context (deprecated compatibility alias)
 mode: curated
 include:
   - skills
@@ -9,10 +9,12 @@ include:
   - run-specs
 exclude:
   - wiki
+  - work-runs
   - experiences
-instructions: "Execute the task from current procedure and explicit continuation state; do not inject accumulated Wiki synthesis into ordinary Experience by default."
+  - proposals
+instructions: "Compatibility policy for pre-0.4 execution SessionTypes. Execute from applicable skills and explicit continuation state; do not inject Wiki synthesis or proposal history into ordinary Work."
 ---
 
-# Standard Experience context
+# Standard Experience context compatibility alias
 
-Keeps ordinary execution focused on active procedure and work continuity while leaving synthesis to the Wiki role.
+Keeps old consumer SessionTypes on the same context boundary as Standard Work during the 0.4 RC migration window.

@@ -6,5 +6,6 @@ CREATE TABLE "RunCheck" (
     "result" VARCHAR,
     "status" VARCHAR,
     "evidence" VARCHAR,
-    "goal" VARCHAR
+    "goal" VARCHAR,
+    "observed_at" TIMESTAMPTZ
 );

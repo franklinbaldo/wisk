@@ -10,18 +10,32 @@ from wisk import Wisk
 from wisk.bootstrap import init_repository, upgrade_repository
 
 
-def _record_experiences(ws: Wisk, count: int) -> None:
+def _write_closed_work_runs(knowledge: Path, count: int) -> None:
+    runs = knowledge / "experiences/runs"
+    runs.mkdir(parents=True, exist_ok=True)
     for index in range(count):
-        ws.record_experience(
-            experience_id=f"consumer-exp-{index}",
-            title=f"Consumer experience {index}",
-            timestamp=f"2026-09-06T1{index}:00:00+00:00",
-            status="success",
-            body=f"# Experience {index}\n\nObserved useful repository work {index}.",
+        stamp = f"2026-09-06T1{index}:00:00Z"
+        (runs / f"consumer-work-{index}.md").write_text(
+            f"""---
+type: LoopRun
+id: runs/consumer-work-{index}
+title: Consumer work {index}
+started_at: \"{stamp}\"
+finished_at: \"{stamp}\"
+status: closed
+run_spec: run-specs/work
+session_type: session-types/standard-work
+task: \"Do useful repository work {index}\"
+---
+
+# Work trace {index}
+""",
+            encoding="utf-8",
         )
 
 
 def _write_local_experience(knowledge: Path) -> Path:
+    """Create a pre-0.4 consumer specialization to prove compatibility inheritance."""
     local = knowledge / "local/session-types/judicial-experience.md"
     local.parent.mkdir(parents=True, exist_ok=True)
     local.write_text(
@@ -38,7 +52,7 @@ nudges:
 
 # Judicial experience
 
-Consumer-owned specialization of the managed standard Experience role.
+Pre-0.4 consumer specialization retained through the RC compatibility bridge.
 """,
         encoding="utf-8",
     )
@@ -56,19 +70,21 @@ def test_init_creates_conformant_managed_consumer_bundle(tmp_path: Path) -> None
     assert manifest["format_version"] == 1
     assert manifest["profile"] == "standard"
     assert ".gitignore" in manifest["managed_files"]
-    assert "specs/sessiontype.md" in manifest["managed_files"]
+    assert "specs/runobservation.md" in manifest["managed_files"]
+    assert "specs/runskilluse.md" in manifest["managed_files"]
     assert (root / ".gitignore").read_text(encoding="utf-8") == (
         "/.gitignore\n/manifest.json\n/specs/\n/knowledge/system/\n"
     )
-    assert (
-        root / "knowledge/system/profiles/standard/session-types/standard-experience.md"
-    ).is_file()
+    assert (root / "knowledge/system/canonical/session-types/work.md").is_file()
+    assert (root / "knowledge/system/canonical/run-specs/work.md").is_file()
+    assert (root / "knowledge/system/profiles/standard/session-types/standard-work.md").is_file()
 
     ws = Wisk.open(root / "knowledge")
     assert ws.next_session() is None
     started = ws.start_next_session("Do the next useful repository work")
-    assert started["session_type"] == "session-types/standard-experience"
-    assert started["run_spec"] == "run-specs/experience"
+    assert started["session_type"] == "session-types/standard-work"
+    assert started["run_spec"] == "run-specs/work"
+    assert started["started_at"]
 
 
 def test_init_preserves_predeclared_local_specialization(tmp_path: Path) -> None:
@@ -84,6 +100,7 @@ def test_init_preserves_predeclared_local_specialization(tmp_path: Path) -> None
     ws = Wisk.open(knowledge)
     started = ws.start_next_session("Do the next useful repository work")
     assert started["session_type"] == "session-types/judicial-experience"
+    assert "session-types/work" in started["session"]["inheritance"]
 
 
 def test_init_preserves_versioned_runtime_knowledge(tmp_path: Path) -> None:
@@ -96,7 +113,7 @@ def test_init_preserves_versioned_runtime_knowledge(tmp_path: Path) -> None:
         "skills/shared.txt",
     ):
         path = knowledge / relative
-        path.parent.mkdir(parents=True, exist_ok=True)
+        path.parent.mkdir(parents=True)
         path.write_text(f"keep {relative}", encoding="utf-8")
         preserved.append(path)
     before = {path: path.read_bytes() for path in preserved}
@@ -108,7 +125,9 @@ def test_init_preserves_versioned_runtime_knowledge(tmp_path: Path) -> None:
     assert {path: path.read_bytes() for path in preserved} == before
 
 
-def test_consumer_specialization_replaces_default_for_scheduler(tmp_path: Path) -> None:
+def test_consumer_specialization_replaces_compatibility_parent_for_scheduler(
+    tmp_path: Path,
+) -> None:
     init_repository(tmp_path)
     knowledge = tmp_path / ".wisk/knowledge"
     _write_local_experience(knowledge)
@@ -118,31 +137,49 @@ def test_consumer_specialization_replaces_default_for_scheduler(tmp_path: Path) 
     ids = [item["session_type"] for item in requested]
     assert "session-types/judicial-experience" in ids
     assert "session-types/standard-experience" not in ids
+    assert "session-types/experience" not in ids
 
     started = ws.start_next_session("Do the next useful repository work")
     assert started["session_type"] == "session-types/judicial-experience"
-    assert started["session"]["inheritance"][-2:] == [
+    assert started["session"]["inheritance"][-3:] == [
+        "session-types/experience",
         "session-types/standard-experience",
         "session-types/judicial-experience",
     ]
+    assert "session-types/work" in started["session"]["inheritance"]
 
 
-def test_standard_profile_runs_wiki_then_skill_as_experience_accumulates(tmp_path: Path) -> None:
+def test_standard_profile_runs_wiki_then_skill_as_work_traces_accumulate(tmp_path: Path) -> None:
     init_repository(tmp_path)
     knowledge = tmp_path / ".wisk/knowledge"
-    ws = Wisk.open(knowledge)
-    _record_experiences(ws, 6)
+    _write_closed_work_runs(knowledge, 6)
 
     due = Wisk.open(knowledge).next_session()
     assert due is not None
     assert due["session_type"] == "session-types/standard-wiki"
+    assert due["metrics"]["threshold_value"] == 6
+    assert "active-handoff" not in due["reasons"]
 
-    wiki_run = Wisk.open(knowledge).start_next_session("Do the next useful work")
+    wiki_run = Wisk.open(knowledge).start_next_session("Synthesize the Work corpus")
     assert wiki_run["session_type"] == "session-types/standard-wiki"
 
     after_wiki = Wisk.open(knowledge).next_session()
     assert after_wiki is not None
     assert after_wiki["session_type"] == "session-types/standard-skill"
+    assert after_wiki["metrics"]["threshold_value"] == 6
+
+
+def test_explicit_experience_alias_warns_but_remains_resolvable(tmp_path: Path) -> None:
+    init_repository(tmp_path)
+    knowledge = tmp_path / ".wisk/knowledge"
+
+    result = Wisk.open(knowledge).start(
+        "Compatibility work",
+        session_type="session-types/experience",
+    )
+
+    assert result["session_type"] == "session-types/experience"
+    assert "compatibility alias" in result["deprecation"]
 
 
 def test_init_refuses_unmanaged_existing_state_without_touching_it(tmp_path: Path) -> None:

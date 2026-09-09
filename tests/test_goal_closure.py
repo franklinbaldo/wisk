@@ -85,7 +85,6 @@ def test_active_goal_blocks_outcome_until_achieved(tmp_path: Path) -> None:
         work_status="complete",
         summary="The goal is achieved and the run can close.",
         next_move="A future run may choose a new goal.",
-        goals_advanced=[goal_id],
     )
     assert outcome["run_status"] == "closed"
     assert outcome["check"]["conformant"] is True
@@ -140,7 +139,6 @@ def test_carried_goal_requires_explicit_handoff_link(tmp_path: Path) -> None:
         work_status="partial",
         summary="The remaining intent is explicitly handed off.",
         next_move="Resume the linked Handoff.",
-        goals_advanced=[goal_id],
     )
     assert closed["check"]["conformant"] is True
 

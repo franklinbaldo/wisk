@@ -1,26 +1,18 @@
 ---
 type: RunSpec
 id: run-specs/experience
-title: Experience run
-version: "1.0.0"
+title: Experience run (deprecated compatibility alias)
+version: "1.1.0"
 status: experimental
-required_reading_kinds:
-  - active-handoffs
-  - active-skills
-required_goal_kinds:
-  - task-advance
-required_evidence_kinds:
-  - execution
-required_check_kinds:
-  - verification
+parent_spec: run-specs/work
 allowed_result_states:
   - success
   - partial
   - blocked
   - no-useful-change
-completion_notes: "Do useful work when available, verify the observed result, and preserve truthful episodic evidence including the skill/version actually used."
+completion_notes: "Compatibility bridge for pre-0.4 consumers. New execution sessions should use run-specs/work."
 ---
 
-# Experience RunSpec
+# Experience RunSpec compatibility alias
 
-The canonical execution contract. `verification` asks whether the claimed observed effect is supported by the execution evidence. It does not decide whether a skill should be promoted globally.
+This RunSpec inherits the canonical Work execution contract during the 0.4 RC migration window. It exists so old authored references remain resolvable; it is not a second execution model.

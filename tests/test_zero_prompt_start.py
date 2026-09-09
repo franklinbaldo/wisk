@@ -114,7 +114,7 @@ def test_resumed_handoff_requires_environment_then_disposition(tmp_path: Path) -
             "created_at": "2026-09-07T00:00:00Z",
             "status": "active",
             "created_by_run": "runs/historical-source",
-            "target_session_type": "session-types/standard-experience",
+            "target_session_type": "session-types/standard-work",
             "state": "A previous session proposed continuing this work.",
             "next_action": "Continue only after revalidating repository assumptions.",
             "references": [],

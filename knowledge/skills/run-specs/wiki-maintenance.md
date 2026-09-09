@@ -2,16 +2,9 @@
 type: RunSpec
 id: run-specs/wiki-maintenance
 title: Wiki maintenance run
-version: "1.0.0"
+version: "1.1.0"
 status: experimental
-required_reading_kinds:
-  - experiences
-  - wiki
-  - active-handoffs
-required_goal_kinds:
-  - consolidate-knowledge
-required_evidence_kinds:
-  - consolidation
+parent_spec: run-specs/wiki
 required_check_kinds:
   - okf
 allowed_result_states:
@@ -19,9 +12,9 @@ allowed_result_states:
   - no-change
   - partial
   - blocked
-completion_notes: "Consolidate useful episodic evidence into WikiEntry knowledge without manufacturing new ontology."
+completion_notes: "Consolidate useful Work trace evidence into WikiEntry knowledge and validate the resulting OKF state without performing operational handoff work."
 ---
 
 # Wiki maintenance RunSpec
 
-Contract for turning experience into persistent reusable knowledge.
+Wisk dogfood specialization of the canonical Wiki contract. It inherits Work-corpus grounding and adds an OKF integrity check for repository knowledge changes.

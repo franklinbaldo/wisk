@@ -31,7 +31,7 @@ def _temp_bundle(tmp_path: Path) -> Path:
 
 
 def test_version() -> None:
-    assert __version__ == "0.3.2"
+    assert __version__ == "0.4.0rc1"
 
 
 def test_bundle_conformance() -> None:
@@ -69,6 +69,8 @@ def test_wisk_runtime_inventory_and_context() -> None:
     assert ctx["context_policy"]["id"] == "context-policies/development"
     assert any(s["id"] == "run-specs/wisk-development" for s in ctx["run_specs"])
     assert "active_handoffs" in ctx
+    assert "recent_work_runs" in ctx
+    assert "skill_proposals" in ctx
 
     bootstrap_ctx = ws.context(task="bootstrap repository setup")
     assert len(bootstrap_ctx["skills"]) >= 1
@@ -87,7 +89,11 @@ def test_run_start_is_incomplete_and_contract_guided(tmp_path: Path) -> None:
 
     assert started["status"] == "scaffold"
     assert started["session_type"] == "session-types/development"
-    assert started["session"]["inheritance"] == ["session-types/base", "session-types/development"]
+    assert started["session"]["inheritance"] == [
+        "session-types/work",
+        "session-types/development",
+    ]
+    assert started["started_at"]
     assert Path(started["path"]).exists()
     assert "experiences/runs" in started["path"]
     assert "active_handoffs" in started
@@ -197,6 +203,8 @@ def test_run_check_turns_green_when_contract_is_satisfied(tmp_path: Path) -> Non
     assert result["structural"]["conformant"] is True
     assert result["unsatisfied"] == []
     assert result["conformant"] is True
+    assert result["counts"]["observations"] == 0
+    assert result["counts"]["skill_uses"] == 0
     assert result["next_action"] == {
         "kind": "complete",
         "requirement": None,
@@ -212,6 +220,9 @@ def test_fastmcp_tools_registered() -> None:
         assert "wisk_context" in tool_names
         assert "wisk_start" in tool_names
         assert "wisk_check" in tool_names
+        assert "wisk_run_trace" in tool_names
+        assert "wisk_run_observation" in tool_names
+        assert "wisk_run_skill_use" in tool_names
         assert "wisk_handoffs" in tool_names
         assert "wisk_handoff_create" in tool_names
         assert "wisk_handoff_continue" in tool_names
@@ -227,6 +238,8 @@ def test_pydantic_schema_contracts_derivation() -> None:
     assert "class AgentSkillConcept(BaseModel):" in code
     assert "class ExperienceConcept(BaseModel):" in code
     assert "class WikiEntryConcept(BaseModel):" in code
+    assert "class RunObservationConcept(BaseModel):" in code
+    assert "class RunSkillUseConcept(BaseModel):" in code
     assert "class RunSpecConcept(BaseModel):" in code
     assert "class HandoffConcept(BaseModel):" in code
     assert "class SessionTypeConcept(BaseModel):" in code
@@ -241,6 +254,8 @@ def test_pydantic_schema_contracts_derivation() -> None:
         "AgentSkill",
         "Experience",
         "WikiEntry",
+        "RunObservation",
+        "RunSkillUse",
         "RunSpec",
         "Handoff",
         "SessionType",
@@ -262,6 +277,7 @@ def test_mcp_tool_execution() -> None:
     assert ctx["task"] == "wisk development"
     assert len(ctx["run_specs"]) >= 1
     assert "active_handoffs" in ctx
+    assert "recent_work_runs" in ctx
 
 
 def test_cli_execution(capsys: pytest.CaptureFixture[str]) -> None:
@@ -269,10 +285,11 @@ def test_cli_execution(capsys: pytest.CaptureFixture[str]) -> None:
 
     info()
     captured = capsys.readouterr()
-    assert "wisk runtime v0.3.2" in captured.out
+    assert "wisk runtime v0.4.0rc1" in captured.out
 
     context("bootstrap")
     captured = capsys.readouterr()
     assert "Context for: bootstrap" in captured.out
     assert "Active handoffs" in captured.out
     assert "Skills found" in captured.out
+    assert "Closed Work traces" in captured.out

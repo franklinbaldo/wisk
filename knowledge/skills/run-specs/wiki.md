@@ -2,12 +2,11 @@
 type: RunSpec
 id: run-specs/wiki
 title: Wiki synthesis run
-version: "1.0.0"
+version: "1.1.0"
 status: experimental
 required_reading_kinds:
-  - experiences
+  - work-runs
   - wiki
-  - active-handoffs
 required_goal_kinds:
   - consolidate-knowledge
 required_evidence_kinds:
@@ -19,9 +18,11 @@ allowed_result_states:
   - no-change
   - partial
   - blocked
-completion_notes: "Synthesize durable knowledge from Experience evidence; when variants differ, preserve that distinction and comparative evidence rather than collapsing it."
+completion_notes: "Synthesize durable knowledge from a corpus of Work traces; preserve meaningful differences, counterevidence, scope and skill-version provenance rather than collapsing them."
 ---
 
 # Wiki RunSpec
 
-The canonical synthesis contract. `grounding` asks whether the WikiEntry claims are traceable to Experience evidence and whether meaningful counterevidence or variant differences were preserved.
+The canonical synthesis contract. `grounding` asks whether WikiEntry claims are traceable to closed Work `LoopRun` evidence and whether meaningful counterevidence or variant differences were preserved.
+
+Operational handoffs are deliberately absent from the contract: resolving unfinished external work is a Work responsibility, not a reason to run Wiki synthesis.

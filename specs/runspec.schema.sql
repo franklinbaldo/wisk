@@ -9,7 +9,6 @@ CREATE TABLE "RunSpec" (
     "required_check_kinds" VARCHAR[],
     "skill" VARCHAR,
     "parent_spec" VARCHAR,
-    "allowed_entry_states" VARCHAR[],
     "allowed_result_states" VARCHAR[],
     "completion_notes" VARCHAR
 );

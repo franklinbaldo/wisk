@@ -37,11 +37,13 @@ def _git(*args: str) -> str:
 
 
 def parse_semver(ver: str) -> tuple[int, int, int]:
-    parts = ver.split(".", 2)
-    if len(parts) != 3:
-        msg = f"Invalid SemVer: {ver}"
+    """Return the release tuple for X.Y.Z and PEP 440 pre-releases such as X.Y.Zrc1."""
+    match = re.fullmatch(r"(\d+)\.(\d+)\.(\d+)(?:(?:a|b|rc)\d+)?", ver)
+    if not match:
+        msg = f"Invalid release version: {ver}"
         raise ValueError(msg)
-    return (int(parts[0]), int(parts[1]), int(parts[2]))
+    major, minor, patch = match.groups()
+    return int(major), int(minor), int(patch)
 
 
 def get_base_version(base_ref: str = "origin/main") -> str | None:
@@ -57,7 +59,6 @@ def check_breaking_test_changes(base_ref: str = "origin/main") -> bool:
     diff = _git("diff", "-U0", f"{base_ref}...HEAD", "--", "tests/")
     if not diff:
         diff = _git("diff", "-U0", base_ref, "--", "tests/")
-    # If lines starting with -assert were deleted in tests, it suggests a modified expectation
     deleted_assertions = [
         line
         for line in diff.splitlines()
@@ -94,13 +95,10 @@ def check_version_and_changelog() -> bool:
     console.print(f"[bold green]✓ Canonical version (__init__.py):[/bold green] {version}")
 
     errors: list[str] = []
-
-    # Discover changelog files
     changelog_dir = ROOT / "changelog"
     changes_dir = changelog_dir / "changes"
     change_files = list(changes_dir.glob("*.md")) if changes_dir.is_dir() else []
     version_files = list(changelog_dir.glob(f"{version}.md"))
-
     matching_cards: list[Path] = []
 
     for card in change_files:
@@ -126,7 +124,6 @@ def check_version_and_changelog() -> bool:
         for card in matching_cards:
             console.print(f"   + {card.relative_to(ROOT)}")
 
-    # Check SemVer transition against base branch if available
     base_version = get_base_version("origin/main")
     if base_version and base_version != version:
         try:
@@ -135,7 +132,6 @@ def check_version_and_changelog() -> bool:
             is_breaking = check_breaking_test_changes("origin/main")
 
             if is_breaking:
-                # If breaking changes exist, bump must be at least MINOR (0.x) or MAJOR (1.x+)
                 if curr_major == base_major and curr_minor == base_minor:
                     msg = (
                         f"Breaking test changes detected against {base_version}! "
@@ -146,7 +142,7 @@ def check_version_and_changelog() -> bool:
                     msg = f"! Non-patch bump ({base_version} -> {version}) accepted"
                     console.print(f"[bold yellow]{msg}[/bold yellow]")
         except Exception as exc:
-            console.print(f"[yellow]Warning during semver diff comparison: {exc}[/yellow]")
+            console.print(f"[yellow]Warning during version diff comparison: {exc}[/yellow]")
 
     if errors:
         console.print("[bold red]Errors detected:[/bold red]")

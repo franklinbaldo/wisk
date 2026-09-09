@@ -1,4 +1,4 @@
-﻿CREATE TABLE "WikiEntry" (
+CREATE TABLE "WikiEntry" (
     "id" VARCHAR,
     "title" VARCHAR,
     "status" VARCHAR,

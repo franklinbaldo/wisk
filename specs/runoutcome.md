@@ -18,12 +18,12 @@ A `RunOutcome` closes the current execution round without requiring that the lar
 - `summary`: What materially changed
 - `next_move`: Natural continuation available to a future run
 
-## Optional Frontmatter Fields
-
-- `goals_advanced`: Links to `RunGoal`
-- `evidence`: Links to decisive `RunEvidence`
-- `checks`: Links to final `RunCheck`
-- `experiences_recorded`: Links to `Experience` distilled from this run
+The outcome stays small: state, summary, continuation. It carries no lists of
+goals, evidence, checks, or experiences, because each of those records already
+names its own `run`, and what makes a close legitimate is enforced by the runtime
+rather than restated here — every `required_check_kind` must have a standing
+`pass` (see `RunCheck`) and every `RunGoal` must have reached a terminal state
+before an outcome may be written.
 
 ## Semantics
 

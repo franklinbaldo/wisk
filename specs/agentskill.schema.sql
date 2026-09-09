@@ -1,4 +1,4 @@
-﻿CREATE TABLE "AgentSkill" (
+CREATE TABLE "AgentSkill" (
     "id" VARCHAR,
     "title" VARCHAR,
     "version" VARCHAR,

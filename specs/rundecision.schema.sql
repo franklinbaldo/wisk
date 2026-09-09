@@ -5,6 +5,5 @@ CREATE TABLE "RunDecision" (
     "decision" VARCHAR,
     "rationale" VARCHAR,
     "goal" VARCHAR,
-    "alternatives" VARCHAR[],
-    "evidence" VARCHAR[]
+    "alternatives" VARCHAR[]
 );

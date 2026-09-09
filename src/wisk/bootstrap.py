@@ -15,9 +15,11 @@ MANIFEST_FORMAT_VERSION = 1
 DEFAULT_PROFILE = "standard"
 
 _CANONICAL_SOURCES = {
+    "knowledge/system/canonical/session-types/work.md": "session-types/work.md",
     "knowledge/system/canonical/session-types/experience.md": "session-types/experience.md",
     "knowledge/system/canonical/session-types/wiki.md": "session-types/wiki.md",
     "knowledge/system/canonical/session-types/skill.md": "session-types/skill.md",
+    "knowledge/system/canonical/run-specs/work.md": "run-specs/work.md",
     "knowledge/system/canonical/run-specs/experience.md": "run-specs/experience.md",
     "knowledge/system/canonical/run-specs/wiki.md": "run-specs/wiki.md",
     "knowledge/system/canonical/run-specs/skill.md": "run-specs/skill.md",

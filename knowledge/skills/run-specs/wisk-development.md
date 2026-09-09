@@ -19,11 +19,6 @@ required_evidence_kinds:
 required_check_kinds:
   - okf
   - tests
-allowed_entry_states:
-  - new
-  - active
-  - review
-  - blocked
 allowed_result_states:
   - red
   - green

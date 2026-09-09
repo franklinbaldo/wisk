@@ -58,10 +58,14 @@ jobs:
           WHEEL="$GITHUB_WORKSPACE/$(find dist -name 'wisk-*.whl' -print -quit)"
           CONSUMER="$(mktemp -d)"
           cd "$CONSUMER"
-          uvx --from "$WHEEL" wisk init
+          # Exercise the project environment a real consumer uses, not a throwaway
+          # tool environment: Wisk is a dependency of the consumer, not a standalone tool.
+          uv init --name wisk-consumer-smoke --python 3.12
+          uv add "$WHEEL"
+          uv run wisk init
           test -f .wisk/manifest.json
-          uvx --from "$WHEEL" wisk start > first.json
-          uvx --from "$WHEEL" wisk start > second.json
+          uv run wisk start > first.json
+          uv run wisk start > second.json
           python - <<'PY'
           import json
 

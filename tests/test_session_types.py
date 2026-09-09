@@ -28,7 +28,7 @@ def _write(path: Path, frontmatter: dict[str, object]) -> None:
 
 def test_session_type_inheritance_appends_nudges() -> None:
     session = Wisk.open(ROOT / "knowledge").effective_session_type("session-types/development")
-    assert session["inheritance"] == ["session-types/base", "session-types/development"]
+    assert session["inheritance"] == ["session-types/work", "session-types/development"]
     assert len(session["nudges"]) >= 4
     assert session["run_spec"] == "run-specs/wisk-development"
 
