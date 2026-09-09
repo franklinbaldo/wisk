@@ -2,8 +2,6 @@
 
 from pathlib import Path
 
-import yaml
-
 from wisk.migrate import migrate_bundle, migrate_document
 
 _LEGACY_RUN = """---
@@ -155,13 +153,11 @@ def test_migrate_drops_a_multiline_flow_collection_without_orphaning_its_termina
     migrated, changes = migrate_document(run)
 
     assert changes == {"dropped:goals", "added:started_at"}
-    assert yaml.safe_load(migrated.split("---\n")[1]) == {
-        "type": "LoopRun",
-        "id": "runs/flow",
-        "timestamp": "2026-09-01T10:00:00Z",
-        "started_at": "2026-09-01T10:00:00Z",
-        "status": "closed",
-    }
+    assert migrated == (
+        '---\ntype: "LoopRun"\nid: "runs/flow"\ntimestamp: "2026-09-01T10:00:00Z"\n'
+        'started_at: "2026-09-01T10:00:00Z"\nstatus: "closed"\n---\n\n# Run\n'
+    )
+    assert "]" not in migrated.split("---\n")[1]
 
 
 def test_migrate_does_not_treat_a_bracket_inside_a_quoted_scalar_as_a_flow_collection() -> None:
@@ -173,8 +169,4 @@ def test_migrate_does_not_treat_a_bracket_inside_a_quoted_scalar_as_a_flow_colle
     migrated, changes = migrate_document(run)
 
     assert changes == {"dropped:goals"}
-    assert yaml.safe_load(migrated.split("---\n")[1]) == {
-        "type": "LoopRun",
-        "id": "runs/quoted",
-        "status": "closed",
-    }
+    assert migrated == ('---\ntype: "LoopRun"\nid: "runs/quoted"\nstatus: "closed"\n---\n\n# Run\n')
