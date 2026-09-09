@@ -44,3 +44,26 @@ RFC 0007 deliberately expands the 0.4 target beyond this first patch: the RC wil
 This is a breaking schema change: a consumer bundle carrying the removed frontmatter
 keys fails normative OKF validation until they are dropped. `wisk migrate` reports what
 it would remove from a bundle, and `wisk migrate --apply` removes it.
+
+## Correctness fixes found while validating the RC
+
+- **the standing check is now chosen by instant, not by timestamp text.** `observed_at`
+  values were compared as strings, so `2026-09-01T12:00:00-03:00` sorted before
+  `2026-09-01T14:00:00Z` although it is the later instant, and the superseded check could
+  win. The values are parsed before they are compared;
+- **an unorderable check can no longer grant closure.** A check recorded without
+  `observed_at`, or with an unparseable one, sorted as the oldest of its kind, so a later
+  `fail` was masked by an earlier `pass` and the required kind counted as satisfied —
+  the exact hole this RC set out to close. When the records of one kind cannot be
+  ordered, a non-passing check now stands and the run stays open;
+- `record_run_check` and `record_run_evidence` default `observed_at` to the current
+  instant, as the Work path already did, so nothing Wisk writes is unorderable;
+- **`wisk migrate --apply` no longer corrupts a multi-line flow collection.** Dropping a
+  removed key whose value spanned several lines as `[` … `]` left the closing bracket
+  behind, and the applied frontmatter no longer parsed. Brackets inside quoted scalars
+  are not counted as collection delimiters;
+- **`wisk migrate` no longer retargets an archived Handoff.** Retargeting exists so an
+  *active* handoff is not stranded on a session type that is no longer selectable. An
+  archived handoff records which session type actually continued the work, and rewriting
+  it would falsify that history.
+

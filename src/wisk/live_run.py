@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -28,6 +29,11 @@ _COMPONENT_LABELS = {
 _GOAL_STATUSES = frozenset({"planned", "active", "advanced", "achieved", "carried_forward"})
 _CHECK_STATUSES = frozenset({"pass", "fail", "inconclusive"})
 _WORK_STATUSES = frozenset({"complete", "partial"})
+
+
+def _now() -> str:
+    """An objective instant for records the caller did not timestamp itself."""
+    return datetime.now(UTC).isoformat().replace("+00:00", "Z")
 
 
 class LiveRunWisk(PinnedWisk):
@@ -176,7 +182,7 @@ class LiveRunWisk(PinnedWisk):
                 "reference": reference,
                 "summary": summary,
                 "goal": goal,
-                "observed_at": observed_at,
+                "observed_at": observed_at or _now(),
             },
         )
 
@@ -206,7 +212,7 @@ class LiveRunWisk(PinnedWisk):
                 "status": status,
                 "evidence": evidence,
                 "goal": goal,
-                "observed_at": observed_at,
+                "observed_at": observed_at or _now(),
             },
         )
 

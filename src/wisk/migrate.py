@@ -41,6 +41,17 @@ RETARGETED_SESSION_TYPES = {
 
 _FRONTMATTER = re.compile(r"\A---\n(.*?)\n---\n(.*)\Z", re.DOTALL)
 _KEY = re.compile(r"^([A-Za-z_][A-Za-z0-9_]*):")
+_QUOTED = re.compile(r"'[^']*'|\"[^\"]*\"")
+
+# A Handoff that is no longer active is closed history; retargeting it would rewrite
+# the record of which session type actually continued the work.
+_HANDOFF_ACTIVE = "active"
+
+
+def _flow_delta(line: str) -> int:
+    """Net depth change of YAML flow collections opened or closed on this line."""
+    text = _QUOTED.sub("", line).split("#", 1)[0]
+    return sum(text.count(char) for char in "[{") - sum(text.count(char) for char in "]}")
 
 
 def _document_type(frontmatter_lines: list[str]) -> str:
@@ -67,13 +78,23 @@ def _strip_keys(
     kept: list[str] = []
     dropped: set[str] = set()
     skipping = False
+    depth = 0
     for line in frontmatter_lines:
+        if skipping and depth > 0:
+            # Inside a multi-line flow collection belonging to a removed key: drop the
+            # continuation lines too, including the line that closes it.
+            depth += _flow_delta(line)
+            if depth <= 0:
+                skipping = False
+                depth = 0
+            continue
         match = _KEY.match(line)
         if match:
             key = match.group(1)
             skipping = key in removed
             if skipping:
                 dropped.add(key)
+                depth = max(_flow_delta(line), 0)
         elif skipping and not line.startswith((" ", "\t", "-")):
             skipping = False
         if not skipping:
@@ -104,6 +125,9 @@ def _add_started_at(frontmatter_lines: list[str]) -> tuple[list[str], bool]:
 def _retarget_handoff(frontmatter_lines: list[str]) -> tuple[list[str], str | None]:
     """Point an active Handoff at the Work session type that replaces its 0.3.x target."""
     if _document_type(frontmatter_lines) != "Handoff":
+        return frontmatter_lines, None
+    status = (_scalar(frontmatter_lines, "status") or "").strip().strip('"').strip("'")
+    if status != _HANDOFF_ACTIVE:
         return frontmatter_lines, None
     current = _scalar(frontmatter_lines, "target_session_type")
     if current is None:

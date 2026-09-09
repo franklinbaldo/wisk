@@ -2,6 +2,8 @@
 
 from pathlib import Path
 
+import yaml
+
 from wisk.migrate import migrate_bundle, migrate_document
 
 _LEGACY_RUN = """---
@@ -127,3 +129,52 @@ def test_migrate_leaves_an_unrecognized_handoff_target_alone() -> None:
 
     assert changes == set()
     assert migrated == handoff
+
+
+def test_migrate_leaves_an_archived_handoff_as_history() -> None:
+    """An archived handoff records which session type actually continued the work."""
+    handoff = (
+        '---\ntype: "Handoff"\nid: "handoffs/done"\nstatus: "archived"\n'
+        'target_session_type: "session-types/experience"\n'
+        'continued_by_run: "runs/legacy"\n---\n\n# Handoff\n'
+    )
+
+    migrated, changes = migrate_document(handoff)
+
+    assert changes == set()
+    assert migrated == handoff
+
+
+def test_migrate_drops_a_multiline_flow_collection_without_orphaning_its_terminator() -> None:
+    """A dangling `]` would make the applied frontmatter unparseable."""
+    run = (
+        '---\ntype: "LoopRun"\nid: "runs/flow"\ntimestamp: "2026-09-01T10:00:00Z"\n'
+        'goals: [\n  "run-goals/one",\n  "run-goals/two"\n]\nstatus: "closed"\n---\n\n# Run\n'
+    )
+
+    migrated, changes = migrate_document(run)
+
+    assert changes == {"dropped:goals", "added:started_at"}
+    assert yaml.safe_load(migrated.split("---\n")[1]) == {
+        "type": "LoopRun",
+        "id": "runs/flow",
+        "timestamp": "2026-09-01T10:00:00Z",
+        "started_at": "2026-09-01T10:00:00Z",
+        "status": "closed",
+    }
+
+
+def test_migrate_does_not_treat_a_bracket_inside_a_quoted_scalar_as_a_flow_collection() -> None:
+    run = (
+        '---\ntype: "LoopRun"\nid: "runs/quoted"\n'
+        'goals: ["run-goals/one [draft]"]\nstatus: "closed"\n---\n\n# Run\n'
+    )
+
+    migrated, changes = migrate_document(run)
+
+    assert changes == {"dropped:goals"}
+    assert yaml.safe_load(migrated.split("---\n")[1]) == {
+        "type": "LoopRun",
+        "id": "runs/quoted",
+        "status": "closed",
+    }

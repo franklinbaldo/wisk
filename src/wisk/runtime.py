@@ -15,25 +15,47 @@ _EXPERIENCE_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
 _EXPERIENCE_STATUSES = frozenset({"success", "failure", "partial", "observation"})
 
 
+def _observed_instant(record: dict[str, Any]) -> datetime | None:
+    """Parse a check's `observed_at` into a comparable instant, or None when unusable.
+
+    Comparing the raw strings would misorder equivalent instants written with
+    different UTC offsets, so the value is parsed rather than sorted textually.
+    """
+    text = str(record["frontmatter"].get("observed_at") or "").strip().strip('"').strip("'")
+    if not text:
+        return None
+    try:
+        parsed = datetime.fromisoformat(text.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    return parsed if parsed.tzinfo is not None else parsed.replace(tzinfo=UTC)
+
+
 def _standing_check(records: list[dict[str, Any]], kind: str) -> dict[str, Any] | None:
     """Return the check that currently stands for one kind, or None when absent.
 
     Checks are append-only, so a later check of the same kind supersedes an earlier
-    one. Ordering is by `observed_at` where present, and by record order otherwise.
+    one. When the recorded instants cannot order the checks — a legacy or hand-written
+    record with a missing or unparseable `observed_at` — closure must not be granted on
+    a guess, so a non-passing check is treated as standing.
     """
-    matching = [
-        (index, item)
-        for index, item in enumerate(records)
-        if str(item["frontmatter"].get("kind") or "") == kind
-    ]
+    matching = [item for item in records if str(item["frontmatter"].get("kind") or "") == kind]
     if not matching:
         return None
 
-    def ordering(pair: tuple[int, dict[str, Any]]) -> tuple[str, int]:
-        index, item = pair
-        return str(item["frontmatter"].get("observed_at") or ""), index
+    instants = [_observed_instant(item) for item in matching]
+    if len(matching) > 1 and any(instant is None for instant in instants):
+        for item in matching:
+            if str(item["frontmatter"].get("status") or "") != "pass":
+                return item
+        return matching[-1]
 
-    return max(matching, key=ordering)[1]
+    def ordering(pair: tuple[int, datetime | None]) -> tuple[datetime, int]:
+        index, instant = pair
+        return instant or datetime.min.replace(tzinfo=UTC), index
+
+    latest = max(enumerate(instants), key=ordering)[0]
+    return matching[latest]
 
 
 def unsatisfied_requirements(

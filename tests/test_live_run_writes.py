@@ -205,3 +205,60 @@ def test_failing_check_keeps_the_run_open_until_a_later_check_passes(tmp_path: P
     )
     outstanding = {item["requirement"] for item in passing["check"]["unsatisfied"]}
     assert "check:tests" not in outstanding
+
+
+def _standing(*checks: tuple[str, str | None]) -> str:
+    from wisk.runtime import _standing_check
+
+    records = []
+    for status, observed_at in checks:
+        frontmatter: dict[str, object] = {"kind": "tests", "status": status}
+        if observed_at is not None:
+            frontmatter["observed_at"] = observed_at
+        records.append({"frontmatter": frontmatter})
+    standing = _standing_check(records, "tests")
+    assert standing is not None
+    return str(standing["frontmatter"]["status"])
+
+
+def test_a_later_check_supersedes_an_earlier_one_in_both_directions() -> None:
+    assert _standing(("fail", "2026-09-01T10:00:00Z"), ("pass", "2026-09-01T11:00:00Z")) == "pass"
+    assert _standing(("pass", "2026-09-01T10:00:00Z"), ("fail", "2026-09-01T11:00:00Z")) == "fail"
+    assert (
+        _standing(("pass", "2026-09-01T10:00:00Z"), ("inconclusive", "2026-09-01T11:00:00Z"))
+        == "inconclusive"
+    )
+
+
+def test_standing_check_orders_by_instant_not_by_timestamp_text() -> None:
+    """`12:00-03:00` is later than `14:00Z`, though it sorts earlier as a string."""
+    assert (
+        _standing(("pass", "2026-09-01T14:00:00Z"), ("fail", "2026-09-01T12:00:00-03:00")) == "fail"
+    )
+
+
+def test_an_unorderable_check_never_grants_closure_on_a_guess() -> None:
+    """A missing or unparseable `observed_at` must not let a stale pass mask a failure."""
+    assert _standing(("pass", "2026-09-01T10:00:00Z"), ("fail", None)) == "fail"
+    assert _standing(("pass", "2026-09-01T10:00:00Z"), ("fail", "not-a-date")) == "fail"
+    assert _standing(("pass", "2026-09-01T10:00:00Z"), ("fail", "2026-09-01T10:00:00Z")) == "fail"
+    assert _standing(("pass", None)) == "pass"
+
+
+def test_a_recorded_check_always_carries_an_objective_instant(tmp_path: Path) -> None:
+    """Without this, a later failing check would be unorderable against an earlier pass."""
+    knowledge = _copy_bundle(tmp_path)
+    ws = Wisk.open(knowledge)
+    run_id = ws.start_run("timestamp defaulting", "run-specs/wisk-development")["run_id"]
+
+    recorded = ws.record_run_check(
+        run=run_id,
+        component_id="untimestamped",
+        kind="tests",
+        procedure="uv run pytest",
+        result="green",
+        status="pass",
+    )
+    written = Path(recorded["path"]).read_text(encoding="utf-8")
+
+    assert "observed_at:" in written

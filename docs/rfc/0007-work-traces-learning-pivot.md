@@ -1,6 +1,6 @@
 ---
 title: "RFC 0007 — Work traces as the Raw Layer and the 0.4 RC learning pivot"
-status: proposed
+status: accepted
 created: 2026-09-08
 target_release: "0.4.0rc1"
 supersedes:
@@ -404,6 +404,12 @@ The `0.4.0rc1` scope includes:
 12. migrations and conformance tests for existing consumer bundles.
 
 The exact internal schema can evolve during the RC if real dogfood exposes a better representation. That is the purpose of the pre-release.
+
+The CausaGanha migration and the complete Work → Wiki → Skill → Work chain are
+deliberately **not** in this list. They are promotion criteria for stable `0.4.0`
+(items 13–17 below), and they depend on an installable RC, so requiring them before
+publishing `0.4.0rc1` would make the RC unreleasable by its own gate. `0.4.0rc1`
+publishes once items 1–12 hold; `0.4.0` stable waits for the dogfood.
 
 ## CausaGanha as the 0.4 golden corpus
 
