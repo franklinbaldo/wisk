@@ -1,0 +1,269 @@
+{
+  "checks": [
+    {
+      "evidence": "run-evidence/20260908t204958z-reproduzir-e-diagnosticar-a-fal/ev-execution-roundtrip",
+      "goal": "run-goals/20260908t204958z-reproduzir-e-diagnosticar-a-fal/goal-diagnose-exit-code",
+      "id": "run-checks/20260908t204958z-reproduzir-e-diagnosticar-a-fal/chk-roundtrip-tipado",
+      "kind": "verification",
+      "procedure": "grep exit_code/git_dirty_before nos arquivos RunExecution gravados e comparar com o envelope em memoria",
+      "result": "Round-trip perde tipo: exit_code=1 vira '1', exit_code=0 desaparece do arquivo, git_dirty_before=false vira a string 'false' (truthy). Causa: _update_execution_next reescreve o arquivo a partir do frontmatter ja relido pelo loader OKF, que stringifica escalares e descarta falsy.",
+      "run": "runs/20260908T204958Z-reproduzir-e-diagnosticar-a-falha-de-exit-code-n",
+      "status": "fail",
+      "type": "RunCheck"
+    }
+  ],
+  "decisions": [],
+  "duration_seconds": null,
+  "evidence": [
+    {
+      "id": "run-evidence/20260908t204958z-reproduzir-e-diagnosticar-a-fal/ev-execution-roundtrip",
+      "kind": "execution",
+      "reference": "run-executions/20260908t204958z-reproduzir-e-diagnosticar-a-fal/execution-829adf0451e9",
+      "run": "runs/20260908T204958Z-reproduzir-e-diagnosticar-a-falha-de-exit-code-n",
+      "summary": "O pytest local reproduziu falha em test_execution.py e a inspecao dos arquivos gravados mostrou exit_code persistido como string ('1','4') e ausente quando vale 0.",
+      "type": "RunEvidence"
+    },
+    {
+      "id": "run-evidence/20260908t204958z-reproduzir-e-diagnosticar-a-fal/execution-829adf0451e9-evidence-1-red-test",
+      "kind": "red-test",
+      "observed_at": "2026-09-08T20:53:12.871800Z",
+      "reference": "run-executions/20260908t204958z-reproduzir-e-diagnosticar-a-fal/execution-829adf0451e9",
+      "run": "runs/20260908T204958Z-reproduzir-e-diagnosticar-a-falha-de-exit-code-n",
+      "summary": "`C:/Users/frank/AppData/Local/Temp/claude/C--Users-frank-workspace/ca48aeec-6d65-45ca-9bbc-b3aaf649047d/scratchpad/e2e/.venv/Scripts/python.exe -m pytest tests/test_execution.py -q -p no:cacheprovider --no-cov` exited 1.",
+      "type": "RunEvidence"
+    },
+    {
+      "id": "run-evidence/20260908t204958z-reproduzir-e-diagnosticar-a-fal/execution-9af5f958d191-evidence-1-red-test",
+      "kind": "red-test",
+      "observed_at": "2026-09-08T20:51:12.416202Z",
+      "reference": "run-executions/20260908t204958z-reproduzir-e-diagnosticar-a-fal/execution-9af5f958d191",
+      "run": "runs/20260908T204958Z-reproduzir-e-diagnosticar-a-falha-de-exit-code-n",
+      "summary": "`C:/Users/frank/AppData/Local/Temp/claude/C--Users-frank-workspace/ca48aeec-6d65-45ca-9bbc-b3aaf649047d/scratchpad/e2e/.venv/Scripts/python.exe -m pytest tests/test_execution.py -x -q` exited 4.",
+      "type": "RunEvidence"
+    }
+  ],
+  "executions": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-c",
+        "pass"
+      ],
+      "cwd": "C:\\Users\\frank\\AppData\\Local\\Temp\\claude\\C--Users-frank-workspace\\ca48aeec-6d65-45ca-9bbc-b3aaf649047d\\scratchpad\\e2e",
+      "executor": "argv",
+      "finished_at": "2026-09-08T20:55:03.381463Z",
+      "git_dirty_after": "true",
+      "git_dirty_before": "true",
+      "git_head_after": "507745ff71c824e89aa13596683a02d43742c451",
+      "git_head_before": "507745ff71c824e89aa13596683a02d43742c451",
+      "id": "run-executions/20260908t204958z-reproduzir-e-diagnosticar-a-fal/execution-6ad3f97ecf60",
+      "launch_error": "FileNotFoundError: [WinError 2] O sistema não pode encontrar o arquivo especificado",
+      "next_after": "evidence:execution",
+      "next_before": "evidence:execution",
+      "run": "runs/20260908T204958Z-reproduzir-e-diagnosticar-a-falha-de-exit-code-n",
+      "started_at": "2026-09-08T20:55:03.377963Z",
+      "stderr_bytes": "0",
+      "stderr_digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_bytes": "0",
+      "stdout_digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "type": "RunExecution"
+    },
+    {
+      "argv": [
+        "C:/Users/frank/AppData/Local/Temp/claude/C--Users-frank-workspace/ca48aeec-6d65-45ca-9bbc-b3aaf649047d/scratchpad/e2e/.venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_execution.py",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "--no-cov"
+      ],
+      "cwd": "C:\\Users\\frank\\AppData\\Local\\Temp\\claude\\C--Users-frank-workspace\\ca48aeec-6d65-45ca-9bbc-b3aaf649047d\\scratchpad\\wisk",
+      "executor": "argv",
+      "exit_code": "1",
+      "expect": "Falha em test_execute_command_records_raw_fact_without_inventing_semantics: assert '0' == 0",
+      "finished_at": "2026-09-08T20:53:12.871800Z",
+      "git_dirty_after": "false",
+      "git_dirty_before": "false",
+      "git_head_after": "7fca22dedce14aa9e893ca2095f3e8c1b3b0e41f",
+      "git_head_before": "7fca22dedce14aa9e893ca2095f3e8c1b3b0e41f",
+      "id": "run-executions/20260908t204958z-reproduzir-e-diagnosticar-a-fal/execution-829adf0451e9",
+      "next_after": "evidence:execution",
+      "next_before": "evidence:execution",
+      "run": "runs/20260908T204958Z-reproduzir-e-diagnosticar-a-falha-de-exit-code-n",
+      "started_at": "2026-09-08T20:51:35.041719Z",
+      "stderr_bytes": "0",
+      "stderr_digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_bytes": "2642",
+      "stdout_digest": "sha256:f24664c4d702187ebc5d42d84510f9a3e58a1142db5abbd67b2b486ddcbcd33a",
+      "type": "RunExecution",
+      "why": "Reproduzir a falha unica atribuivel a #71 com o plugin de cobertura instalado"
+    },
+    {
+      "argv": [
+        "C:/Users/frank/AppData/Local/Temp/claude/C--Users-frank-workspace/ca48aeec-6d65-45ca-9bbc-b3aaf649047d/scratchpad/e2e/.venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_execution.py",
+        "-x",
+        "-q"
+      ],
+      "cwd": "C:\\Users\\frank\\AppData\\Local\\Temp\\claude\\C--Users-frank-workspace\\ca48aeec-6d65-45ca-9bbc-b3aaf649047d\\scratchpad\\wisk",
+      "executor": "argv",
+      "exit_code": "4",
+      "expect": "pytest falha em test_execute_command_records_raw_fact_without_inventing_semantics com assert '0' == 0",
+      "finished_at": "2026-09-08T20:51:12.416202Z",
+      "git_dirty_after": "false",
+      "git_dirty_before": "false",
+      "git_head_after": "7fca22dedce14aa9e893ca2095f3e8c1b3b0e41f",
+      "git_head_before": "7fca22dedce14aa9e893ca2095f3e8c1b3b0e41f",
+      "id": "run-executions/20260908t204958z-reproduzir-e-diagnosticar-a-fal/execution-9af5f958d191",
+      "next_after": "evidence:execution",
+      "next_before": "evidence:execution",
+      "run": "runs/20260908T204958Z-reproduzir-e-diagnosticar-a-falha-de-exit-code-n",
+      "started_at": "2026-09-08T20:51:09.724653Z",
+      "stderr_bytes": "462",
+      "stderr_digest": "sha256:8f44f46407d86f3759899c79e7b8e069a4d99e98b5a84c7b8478b66c42e89bc0",
+      "stdout_bytes": "0",
+      "stdout_digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "type": "RunExecution",
+      "why": "Reproduzir localmente a falha unica atribuivel a #71"
+    }
+  ],
+  "goals": [
+    {
+      "goal": "Reproduzir localmente a falha de test_execute_command_records_raw_fact_without_inventing_semantics e localizar onde exit_code deixa de ser int",
+      "id": "run-goals/20260908t204958z-reproduzir-e-diagnosticar-a-fal/goal-diagnose-exit-code",
+      "kind": "task-advance",
+      "rationale": "O CI da arvore #70+#71 falha nesse teste com assert '0' == 0; e a unica falha atribuivel a #71.",
+      "run": "runs/20260908T204958Z-reproduzir-e-diagnosticar-a-falha-de-exit-code-n",
+      "status": "achieved",
+      "success_signal": "Um comando pytest local reproduz a falha e o trace registra a causa observada.",
+      "type": "RunGoal"
+    }
+  ],
+  "id": "runs/20260908T204958Z-reproduzir-e-diagnosticar-a-falha-de-exit-code-n",
+  "observations": [
+    {
+      "id": "run-observations/20260908t204958z-reproduzir-e-diagnosticar-a-fal/obs-component-id-inventado",
+      "impact": "medium",
+      "kind": "friction",
+      "observed_at": "2026-09-08T20:54:24.082173Z",
+      "run": "runs/20260908T204958Z-reproduzir-e-diagnosticar-a-falha-de-exit-code-n",
+      "summary": "Todo record exige --component-id que o operador precisa inventar (reading-active-handoffs, goal-diagnose-exit-code). O identificador nao carrega informacao que kind+timestamp ja nao deem, e e a causa mais provavel de FileExistsError em sessoes repetidas.",
+      "type": "RunObservation"
+    },
+    {
+      "id": "run-observations/20260908t204958z-reproduzir-e-diagnosticar-a-fal/obs-enum-so-no-traceback",
+      "impact": "high",
+      "kind": "friction",
+      "observed_at": "2026-09-08T20:57:04.046038Z",
+      "run": "runs/20260908T204958Z-reproduzir-e-diagnosticar-a-falha-de-exit-code-n",
+      "summary": "Valores validos de enums nao aparecem no --help: --work-status e --result-state sao apenas '[required]'. Descobri 'complete|partial' provocando um ValueError que a CLI deixou vazar como traceback Python completo, sem mensagem de erro tratada.",
+      "type": "RunObservation"
+    },
+    {
+      "id": "run-observations/20260908t204958z-reproduzir-e-diagnosticar-a-fal/obs-envelope-no-stderr",
+      "impact": "high",
+      "kind": "friction",
+      "observed_at": "2026-09-08T20:54:32.073546Z",
+      "run": "runs/20260908T204958Z-reproduzir-e-diagnosticar-a-falha-de-exit-code-n",
+      "summary": "wisk run escreve o stdout do subprocesso no stdout do proprio wisk e o envelope JSON no stderr. 'wisk run ... > out.json' captura a saida do comando, nao o envelope; um consumidor que faca json.loads no stdout quebra sempre que o comando imprime algo.",
+      "type": "RunObservation"
+    },
+    {
+      "id": "run-observations/20260908t204958z-reproduzir-e-diagnosticar-a-fal/obs-evidence-kind-nao-satisfaz",
+      "impact": "medium",
+      "kind": "friction",
+      "observed_at": "2026-09-08T20:54:35.966164Z",
+      "run": "runs/20260908T204958Z-reproduzir-e-diagnosticar-a-falha-de-exit-code-n",
+      "summary": "Executar o comando de verdade com --evidence red-test deixa o requisito 'evidence:execution' pendente. A distincao RED-vs-verde e correta, mas o operador precisa gravar uma segunda RunEvidence sobre exatamente a mesma execucao so para satisfazer o contrato.",
+      "type": "RunObservation"
+    },
+    {
+      "id": "run-observations/20260908t204958z-reproduzir-e-diagnosticar-a-fal/obs-help-sem-descricao",
+      "impact": "high",
+      "kind": "friction",
+      "observed_at": "2026-09-08T20:54:28.003470Z",
+      "run": "runs/20260908T204958Z-reproduzir-e-diagnosticar-a-falha-de-exit-code-n",
+      "summary": "wisk run --help lista os parametros sem nenhuma descricao, e cyclopts renderiza pares confusos como '--evidence --empty-evidence'. Tive de ler src/wisk/execution.py para descobrir que --evidence e --check recebem um kind livre.",
+      "type": "RunObservation"
+    },
+    {
+      "id": "run-observations/20260908t204958z-reproduzir-e-diagnosticar-a-fal/obs-readings-vazias",
+      "impact": "high",
+      "kind": "friction",
+      "observed_at": "2026-09-08T20:54:20.143876Z",
+      "run": "runs/20260908T204958Z-reproduzir-e-diagnosticar-a-falha-de-exit-code-n",
+      "summary": "Num repositorio recem-inicializado, wisk start exige RunReading 'active-handoffs' e 'active-skills' antes de qualquer trabalho, mas ambas so podem dizer 'nao ha nenhum'. A cerimonia produz dois documentos sem conteudo informativo e atrasa a primeira acao util.",
+      "type": "RunObservation"
+    },
+    {
+      "id": "run-observations/20260908t204958z-reproduzir-e-diagnosticar-a-fal/obs-record-6-campos",
+      "impact": "medium",
+      "kind": "friction",
+      "observed_at": "2026-09-08T20:54:41.942740Z",
+      "run": "runs/20260908T204958Z-reproduzir-e-diagnosticar-a-falha-de-exit-code-n",
+      "summary": "record reading exige seis campos obrigatorios (run, component-id, kind, subject, reference, finding) para registrar um fato vazio. Subject e reference viram texto de preenchimento quando nao ha o que ler.",
+      "type": "RunObservation"
+    },
+    {
+      "id": "run-observations/20260908t204958z-reproduzir-e-diagnosticar-a-fal/obs-run-honesto-nao-fecha",
+      "impact": "high",
+      "kind": "friction",
+      "observed_at": "2026-09-08T20:58:17.490777Z",
+      "run": "runs/20260908T204958Z-reproduzir-e-diagnosticar-a-falha-de-exit-code-n",
+      "summary": "Um RunCheck kind 'verification' com status fail NAO satisfaz o requisito check:verification (runtime.py:79 exige status pass). Uma sessao de diagnostico cujo resultado verdadeiro e 'esta quebrado' nao consegue fechar nem como partial+handoff: o mesmo gate bloqueia o RunOutcome. O unico caminho para fechar e registrar um check verde sobre outra proposicao, ou seja, o contrato pressiona o agente a mentir.",
+      "type": "RunObservation"
+    }
+  ],
+  "outcomes": [],
+  "path": "experiences/runs/20260908T204958Z-reproduzir-e-diagnosticar-a-falha-de-exit-code-n.md",
+  "readings": [
+    {
+      "finding": "Repositorio consumidor recem-inicializado; nenhum handoff aberto.",
+      "id": "run-readings/20260908t204958z-reproduzir-e-diagnosticar-a-fal/reading-active-handoffs",
+      "kind": "active-handoffs",
+      "reference": ".wisk/knowledge/handoffs",
+      "run": "runs/20260908T204958Z-reproduzir-e-diagnosticar-a-falha-de-exit-code-n",
+      "subject": "Handoffs abertos neste repositorio consumidor",
+      "type": "RunReading"
+    },
+    {
+      "finding": "Apenas skill-adopt-wisk-consumer@1.1.0 ativa; nenhuma skill cobre diagnostico de round-trip de frontmatter.",
+      "id": "run-readings/20260908t204958z-reproduzir-e-diagnosticar-a-fal/reading-active-skills",
+      "kind": "active-skills",
+      "reference": ".wisk/knowledge/skills",
+      "run": "runs/20260908T204958Z-reproduzir-e-diagnosticar-a-falha-de-exit-code-n",
+      "subject": "AgentSkills ativos no bundle gerenciado",
+      "type": "RunReading"
+    }
+  ],
+  "run": {
+    "id": "runs/20260908T204958Z-reproduzir-e-diagnosticar-a-falha-de-exit-code-n",
+    "run_spec": "run-specs/work",
+    "run_spec_digest": "sha256:2749260321df1601ce8dac30124642a89580d5bba49cf682b6c3a0cfa304ab8a",
+    "run_spec_snapshot": "{\"allowed_result_states\":[\"success\",\"partial\",\"blocked\",\"no-useful-change\"],\"completion_notes\":\"Do useful work when available, verify the observed result, and preserve a truthful raw execution trace including exact skill/version provenance when skills guided the work.\",\"id\":\"run-specs/work\",\"required_check_kinds\":[\"verification\"],\"required_evidence_kinds\":[\"execution\"],\"required_goal_kinds\":[\"task-advance\"],\"required_reading_kinds\":[\"active-handoffs\",\"active-skills\"],\"status\":\"experimental\",\"title\":\"Work run\",\"type\":\"RunSpec\",\"version\":\"1.0.0\"}",
+    "run_spec_version": "1.0.0",
+    "session_type": "session-types/standard-work",
+    "started_at": "2026-09-08T20:49:58.880416Z",
+    "status": "in_progress",
+    "task": "Reproduzir e diagnosticar a falha de exit_code no run_trace da RFC 0003",
+    "timestamp": "2026-09-08T20:49:58.880416Z",
+    "title": "Reproduzir e diagnosticar a falha de exit_code no run_trace da RFC 0003",
+    "type": "LoopRun"
+  },
+  "skill_uses": [
+    {
+      "id": "run-skill-uses/20260908t204958z-reproduzir-e-diagnosticar-a-fal/execution-9af5f958d191-skill-1",
+      "notes": "Declared via wisk run --using for run-executions/20260908t204958z-reproduzir-e-diagnosticar-a-fal/execution-9af5f958d191.",
+      "observed_at": "2026-09-08T20:51:12.416202Z",
+      "run": "runs/20260908T204958Z-reproduzir-e-diagnosticar-a-falha-de-exit-code-n",
+      "skill": "skill-adopt-wisk-consumer",
+      "skill_status": "active",
+      "skill_version": "1.1.0",
+      "type": "RunSkillUse"
+    }
+  ]
+}
