@@ -55,3 +55,7 @@ Changes to procedural skills and execution contracts are proposed/evaluated thro
 ### Phase 5 — MCP-driven operation
 
 Agent sessions primarily operate through `wisk_*` FastMCP tools, with the OKF graph remaining the durable source of truth.
+
+## Recorded dogfooding runs
+
+- [2026-09-08 — `wisk run` end to end](dogfooding-runs/2026-09-08-wisk-run-e2e/README.md) — consumer session on `0.4.0rc1`; CI attribution for #70/#71, typed round-trip loss in `RunExecution`, and eight recorded frictions with their raw trace.
