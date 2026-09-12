@@ -8,7 +8,7 @@ description: "Persisted execution instance whose typed child graph is Wisk's Raw
 
 A `LoopRun` is the persisted state of one agent execution round. For a Work SessionType, the closed LoopRun plus its typed child records is Wisk's repository-resident Raw Layer: the execution trace that later Wiki sessions can study without relying on provider chat history.
 
-It exists before substantive work begins, starts intentionally incomplete, and accumulates typed readings, goals, decisions, evidence, checks, observations, skill-use provenance and an outcome as the session progresses.
+It exists before substantive work begins, starts intentionally incomplete, and accumulates typed readings, goals, decisions, command executions, evidence, checks, observations, skill-use provenance and an outcome as the session progresses.
 
 The applicable `RunSpec` defines what a well-formed run requires. `SessionType` records the cognitive role exercised by the run and supplies its purpose, inherited nudges, policies, and default RunSpec selection.
 
@@ -43,7 +43,9 @@ New LoopRuns freeze the complete RunSpec frontmatter that governed the run at cr
 
 ## Raw run components
 
-A LoopRun stores no lists of its own components. Every `RunReading`, `RunGoal`, `RunDecision`, `RunEvidence`, `RunCheck`, `RunObservation`, `RunSkillUse`, and `RunOutcome` carries a `run` link back to the LoopRun, and the runtime derives membership from those links.
+A LoopRun stores no lists of its own components. Every `RunReading`, `RunGoal`, `RunDecision`, `RunExecution`, `RunEvidence`, `RunCheck`, `RunObservation`, `RunSkillUse`, and `RunOutcome` carries a `run` link back to the LoopRun, and the runtime derives membership from those links.
+
+`RunExecution` is the objective fact that Wisk observed one command attempt. It does not replace semantic records: a command only becomes evidence, a formal check, an observation, or skill-use provenance through an explicit typed relationship.
 
 The single source of truth for membership is the child record. Semantic relationships that mean more than membership remain explicit, such as `RunCheck.evidence`, `WikiEntry.evidence`, `AgentSkill.derived_from`, and SkillProposal lineage/gating history.
 

@@ -1,0 +1,23 @@
+CREATE TABLE "RunExecution" (
+    "id" VARCHAR,
+    "run" VARCHAR,
+    "executor" VARCHAR,
+    "argv" VARCHAR[],
+    "cwd" VARCHAR,
+    "started_at" TIMESTAMPTZ,
+    "finished_at" TIMESTAMPTZ,
+    "exit_code" INTEGER,
+    "launch_error" VARCHAR,
+    "why" VARCHAR,
+    "expect" VARCHAR,
+    "next_before" VARCHAR,
+    "next_after" VARCHAR,
+    "stdout_bytes" BIGINT,
+    "stderr_bytes" BIGINT,
+    "stdout_digest" VARCHAR,
+    "stderr_digest" VARCHAR,
+    "git_head_before" VARCHAR,
+    "git_dirty_before" BOOLEAN,
+    "git_head_after" VARCHAR,
+    "git_dirty_after" BOOLEAN
+);
