@@ -13,3 +13,4 @@ date: 2026-09-08
 - moves manual typed CLI writes to `wisk record ...` and promotes `wisk trace` to the top level;
 - exposes real execution through MCP only in the server environment it actually controls;
 - reports `effect_may_have_occurred` when persistence fails after a command may already have changed external state.
+- patches `next_after` through the parser's transactional scalar writer without updating generated schema columns or degrading the stored execution facts; regression tests cover zero exit codes, booleans, repeated updates, write failures, and raw output digests.

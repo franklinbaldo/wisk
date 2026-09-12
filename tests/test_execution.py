@@ -1,11 +1,14 @@
 from __future__ import annotations
 
 import asyncio
+import hashlib
+import os
 import subprocess
 import sys
 from pathlib import Path
 
 import pytest
+import yaml
 
 from wisk import Wisk
 from wisk.bootstrap import init_repository
@@ -56,11 +59,122 @@ def test_execute_command_records_raw_fact_without_inventing_semantics(tmp_path: 
     assert execution["exit_code"] == 0
     assert execution["why"] == "Exercise the command wrapper"
     assert execution["expect"] == "The command prints one line and exits zero"
-    assert execution["stdout_bytes"] == len(b"hello from worker\n")
+    assert execution["stdout_bytes"] == len(f"hello from worker{os.linesep}".encode())
     assert execution["stdout_digest"].startswith("sha256:")
     assert trace["evidence"] == []
     assert trace["checks"] == []
     assert Wisk.open(knowledge).check_run(run)["counts"]["executions"] == 1
+
+
+@pytest.mark.parametrize("exit_code,make_dirty", [(0, False), (3, True)])
+def test_execution_update_preserves_stored_types_after_reopen(
+    tmp_path: Path, exit_code: int, make_dirty: bool
+) -> None:
+    knowledge, ws, run = _runtime(tmp_path)
+    cwd = tmp_path / "command-repo"
+    cwd.mkdir()
+    subprocess.run(["git", "init", str(cwd)], check=True, capture_output=True)
+    subprocess.run(
+        [
+            "git",
+            "-c",
+            "user.name=Wisk Test",
+            "-c",
+            "user.email=test@example.invalid",
+            "commit",
+            "--allow-empty",
+            "-m",
+            "fixture",
+        ],
+        cwd=cwd,
+        check=True,
+        capture_output=True,
+    )
+    command = (
+        "from pathlib import Path; "
+        + ("Path('changed').touch(); " if make_dirty else "")
+        + f"raise SystemExit({exit_code})"
+    )
+    argv = [sys.executable, "-c", command]
+    result = ws.execute_command(argv, run=run, cwd=cwd)
+    record = ws._find_record("RunExecution", result["execution"])
+    path = knowledge / record["path"]
+
+    def stored() -> dict:
+        return yaml.safe_load(path.read_text(encoding="utf-8").split("---", 2)[1])
+
+    original = stored()
+    assert original["exit_code"] == exit_code
+    assert type(original["exit_code"]) is int
+    assert original["stdout_bytes"] == original["stderr_bytes"] == 0
+    assert type(original["stdout_bytes"]) is type(original["stderr_bytes"]) is int
+    assert original["git_dirty_before"] is False
+    assert original["git_dirty_after"] is make_dirty
+    assert original["argv"] == argv
+    assert original["next_after"] == result["next_after"]
+
+    # The update must preserve every other fact, including falsy values, on disk.
+    for next_after in ("check:verification", None):
+        reopened = Wisk.open(knowledge)
+        reopened._update_execution_next(result["execution"], next_after)
+        current = stored()
+        assert current.get("next_after") == next_after
+        assert {k: v for k, v in current.items() if k != "next_after"} == {
+            k: v for k, v in original.items() if k != "next_after"
+        }
+        trace = Wisk.open(knowledge).run_trace(run)["executions"][0]
+        assert type(trace["exit_code"]) is int
+        assert trace["exit_code"] == exit_code
+        assert trace["git_dirty_before"] is False
+        assert trace["git_dirty_after"] is make_dirty
+        assert trace["stdout_bytes"] == trace["stderr_bytes"] == 0
+        assert trace["argv"] == argv
+
+
+def test_execution_normalizes_display_but_preserves_raw_output_facts(tmp_path: Path) -> None:
+    knowledge, ws, run = _runtime(tmp_path)
+    raw = b"first\r\nsecond\r\n"
+    result = ws.execute_command(
+        [
+            sys.executable,
+            "-c",
+            f"import sys; sys.stdout.buffer.write({raw!r}); sys.stderr.buffer.write({raw!r})",
+        ],
+        run=run,
+        cwd=tmp_path,
+    )
+    trace = Wisk.open(knowledge).run_trace(run)["executions"][0]
+    for stream in ("stdout", "stderr"):
+        assert result[stream] == "first\nsecond\n"
+        assert result[f"{stream}_bytes"] == trace[f"{stream}_bytes"] == len(raw)
+        digest = f"sha256:{hashlib.sha256(raw).hexdigest()}"
+        assert result[f"{stream}_digest"] == trace[f"{stream}_digest"] == digest
+
+
+def test_execution_next_update_failure_preserves_the_observed_record(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    knowledge, ws, run = _runtime(tmp_path)
+    marker = tmp_path / "executed"
+    monkeypatch.setattr(
+        "wisk.okf_execution.apply_bundle",
+        lambda *args, **kwargs: {"succeeded": False, "error": "simulated write conflict"},
+    )
+    with pytest.raises(ExecutionPersistenceError) as excinfo:
+        ws.execute_command(
+            [sys.executable, "-c", f"from pathlib import Path; Path({str(marker)!r}).touch()"],
+            run=run,
+            cwd=tmp_path,
+        )
+    assert marker.exists()
+    assert excinfo.value.effect_may_have_occurred is True
+    assert "simulated write conflict" in str(excinfo.value.__cause__)
+    record = ws._records("RunExecution")[0]
+    path = knowledge / record["path"]
+    stored = yaml.safe_load(path.read_text(encoding="utf-8").split("---", 2)[1])
+    assert type(stored["exit_code"]) is int
+    assert stored["exit_code"] == 0
+    assert "next_after" not in stored
 
 
 def test_explicit_projections_link_execution_to_semantic_records(tmp_path: Path) -> None:
