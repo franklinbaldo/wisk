@@ -1,5 +1,9 @@
 # Dogfooding run — `wisk run` end to end, 2026-09-08
 
+Historical report. See the [September 12 verification](verification-2026-09-12.md)
+for the rebased stack, the follow-up persistence failure and its correction. The
+original report and all raw trace files below are preserved as observed.
+
 An end-to-end consumer session driven entirely through the `0.4.0rc1` CLI built from
 `rfc/wisk-run-golden-path` (PR #71, stacked on PR #70). The session's own task was to
 reproduce and diagnose the single CI failure attributable to #71.
