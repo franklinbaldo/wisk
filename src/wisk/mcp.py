@@ -17,10 +17,28 @@ _WRITE_ANNOTATIONS = {
     "idempotentHint": False,
     "openWorldHint": False,
 }
+_EXECUTE_ANNOTATIONS = {
+    "readOnlyHint": False,
+    "destructiveHint": True,
+    "idempotentHint": False,
+    "openWorldHint": True,
+}
+_MCP_OUTPUT_LIMIT = 65536
 
 
 def _get_runtime(path: str | Path | None = None):
     return _runtime(path)
+
+
+def _bound_execution_output(result: dict[str, Any]) -> dict[str, Any]:
+    """Keep MCP responses bounded without changing persisted execution digests/counts."""
+    bounded = dict(result)
+    for name in ("stdout", "stderr"):
+        text = str(bounded.get(name) or "")
+        if len(text) > _MCP_OUTPUT_LIMIT:
+            bounded[name] = text[:_MCP_OUTPUT_LIMIT]
+            bounded[f"{name}_truncated_for_mcp"] = True
+    return bounded
 
 
 @mcp.tool(
@@ -112,6 +130,51 @@ def wisk_check(run: str, path: str | None = None) -> dict[str, Any]:
 )
 def wisk_run_trace(run: str, path: str | None = None) -> dict[str, Any]:
     return _get_runtime(path).run_trace(run)
+
+
+@mcp.tool(
+    name="wisk_run",
+    description=(
+        "Execute real direct argv in the MCP server's authorized environment, persist an "
+        "objective RunExecution, and optionally project explicit evidence/check/observation/"
+        "skill-use records. This tool never pretends to execute in the caller's local machine."
+    ),
+    annotations=_EXECUTE_ANNOTATIONS,
+)
+def wisk_run(
+    argv: list[str],
+    run: str | None = None,
+    task: str | None = None,
+    run_spec: str | None = None,
+    session_type: str | None = None,
+    cwd: str | None = None,
+    why: str | None = None,
+    expect: str | None = None,
+    evidence: list[str] | None = None,
+    checks: list[str] | None = None,
+    observe: str | None = None,
+    note: str | None = None,
+    impact: str = "medium",
+    using: list[str] | None = None,
+    path: str | None = None,
+) -> dict[str, Any]:
+    result = _get_runtime(path).execute_command(
+        argv,
+        run=run,
+        task=task,
+        run_spec=run_spec,
+        session_type=session_type,
+        cwd=cwd,
+        why=why,
+        expect=expect,
+        evidence=evidence,
+        checks=checks,
+        observe=observe,
+        note=note,
+        impact=impact,
+        using=using,
+    )
+    return _bound_execution_output(result)
 
 
 @mcp.tool(

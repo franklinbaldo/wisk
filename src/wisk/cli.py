@@ -32,8 +32,8 @@ handoff_app = app.command(
 session_app = app.command(
     cyclopts.App(name="session", help="Inspect scheduling and start eligible SessionTypes.")
 )
-run_app = app.command(
-    cyclopts.App(name="run", help="Record and inspect typed state in a Work LoopRun trace.")
+record_app = app.command(
+    cyclopts.App(name="record", help="Persist explicit typed facts in the active LoopRun trace.")
 )
 
 
@@ -154,6 +154,61 @@ def check(run: str, *, path: str | None = None) -> None:
     _print_json(_wiki(path).check_run(run))
 
 
+@app.command(name="trace")
+def trace_command(run: str, *, path: str | None = None) -> None:
+    """Reconstruct one Work Raw Layer trace from child-owned run links."""
+    _print_json(_wiki(path).run_trace(run))
+
+
+@app.command(name="run")
+def execute_command(
+    *argv: str,
+    run: str | None = None,
+    task: str | None = None,
+    run_spec: str | None = None,
+    session_type: str | None = None,
+    cwd: str | None = None,
+    why: str | None = None,
+    expect: str | None = None,
+    evidence: list[str] | None = None,
+    check: list[str] | None = None,
+    observe: str | None = None,
+    note: str | None = None,
+    impact: str = "medium",
+    using: list[str] | None = None,
+    path: str | None = None,
+) -> None:
+    """Execute direct argv and persist an objective RunExecution plus requested projections."""
+    result = _wiki(path).execute_command(
+        list(argv),
+        run=run,
+        task=task,
+        run_spec=run_spec,
+        session_type=session_type,
+        cwd=cwd,
+        why=why,
+        expect=expect,
+        evidence=evidence,
+        checks=check,
+        observe=observe,
+        note=note,
+        impact=impact,
+        using=using,
+    )
+    stdout = str(result.pop("stdout", ""))
+    stderr = str(result.pop("stderr", ""))
+    if stdout:
+        sys.stdout.write(stdout)
+    if stderr:
+        sys.stderr.write(stderr)
+    print(json.dumps(result, ensure_ascii=False, sort_keys=True), file=sys.stderr)
+    if result.get("launch_error"):
+        raise SystemExit(127)
+    exit_code = result.get("exit_code")
+    if isinstance(exit_code, int) and exit_code != 0:
+        raise SystemExit(exit_code)
+
+
 @session_app.command(name="next")
 def session_next(*, path: str | None = None) -> None:
     """Show the highest-priority automatically eligible SessionType."""
@@ -166,13 +221,7 @@ def session_start_next(task: str, *, path: str | None = None) -> None:
     _print_json(start_operation(task, path=path))
 
 
-@run_app.command(name="trace")
-def run_trace(run: str, *, path: str | None = None) -> None:
-    """Reconstruct one Work Raw Layer trace from child-owned run links."""
-    _print_json(_wiki(path).run_trace(run))
-
-
-@run_app.command(name="reading")
+@record_app.command(name="reading")
 def run_reading(
     run: str,
     component_id: str,
@@ -196,7 +245,7 @@ def run_reading(
     )
 
 
-@run_app.command(name="goal")
+@record_app.command(name="goal")
 def run_goal(
     run: str,
     component_id: str,
@@ -222,7 +271,7 @@ def run_goal(
     )
 
 
-@run_app.command(name="goal-status")
+@record_app.command(name="goal-status")
 def run_goal_status(
     run: str,
     goal: str,
@@ -234,7 +283,7 @@ def run_goal_status(
     _print_json(_wiki(path).update_run_goal_status(run=run, goal=goal, status=status))
 
 
-@run_app.command(name="decision")
+@record_app.command(name="decision")
 def run_decision(
     run: str,
     component_id: str,
@@ -260,7 +309,7 @@ def run_decision(
     )
 
 
-@run_app.command(name="evidence")
+@record_app.command(name="evidence")
 def run_evidence(
     run: str,
     component_id: str,
@@ -286,7 +335,7 @@ def run_evidence(
     )
 
 
-@run_app.command(name="observation")
+@record_app.command(name="observation")
 def run_observation(
     run: str,
     component_id: str,
@@ -312,7 +361,7 @@ def run_observation(
     )
 
 
-@run_app.command(name="skill-use")
+@record_app.command(name="skill-use")
 def run_skill_use(
     run: str,
     component_id: str,
@@ -338,7 +387,7 @@ def run_skill_use(
     )
 
 
-@run_app.command(name="check")
+@record_app.command(name="check")
 def run_check_record(
     run: str,
     component_id: str,
@@ -368,7 +417,7 @@ def run_check_record(
     )
 
 
-@run_app.command(name="outcome")
+@record_app.command(name="outcome")
 def run_outcome(
     run: str,
     component_id: str,
